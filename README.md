@@ -43,6 +43,7 @@ Agent Team is a Claude Code plugin that gives you a complete software developmen
 - **Project Manager** (your main agent) — understands requirements, dispatches work, reports progress
 - **Planner** — analyzes requirements, creates detailed step-by-step plans
 - **Developer** — writes code according to the plan, fixes bugs
+- **Reviewer** — reviews code for standards, architecture, and security (opus-powered)
 - **Tester** — verifies features, takes browser screenshots, reports issues
 
 All agents communicate through a shared Markdown file. Fully automated — you just describe what you want.
@@ -72,7 +73,7 @@ Then tell the PM what you need:
 
 > "Build a landing page with a hero section and contact form"
 
-The team handles everything: plan → develop → test → report.
+The team handles everything: plan → develop → review → test → report.
 
 ## File Structure
 
@@ -84,6 +85,7 @@ skills/team/
 ├── prompts/
 │   ├── planner.md     # Planner system prompt
 │   ├── developer.md   # Developer system prompt
+│   ├── reviewer.md    # Reviewer system prompt
 │   └── tester.md      # Tester system prompt
 └── template/
     └── comm-log.md    # Shared communication log template
@@ -98,15 +100,18 @@ User Request → Project Manager (your Claude Code session)
                     │
     2. Developer (background) writes code
                     │
-    3. Tester (background) runs tests, takes screenshots
+    3. Reviewer (background, opus) checks code quality
+       Fail? → back to same Developer to fix
                     │
-    4. Bugs found? → SendMessage to SAME developer to fix
-       Same tester re-tests → loop until all pass
+    4. Tester (background) runs tests, takes screenshots
                     │
-    5. PM reports results back to you
+    5. Bugs found? → same Dev → same Reviewer → same Tester
+       Loop until all pass (max 3)
+                    │
+    6. PM reports results back to you
 ```
 
-The developer and tester run in the background (`run_in_background: true`) within each round. When bugs are found, the **same** developer fixes them via `SendMessage` — full context preserved, true ownership.
+Developer, Reviewer, and Tester run in the background (`run_in_background: true`) within each round. When issues are found, the **same** developer fixes them and the **same** reviewer re-checks — full context preserved, true ownership.
 
 ## Customizing Models
 
