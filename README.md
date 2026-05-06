@@ -1,104 +1,21 @@
-# Agent Team — Claude Code 多 Agent 协作团队
+<style>
+.lang-toggle { display: inline-flex; border: 1px solid #d0d7de; border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+.lang-toggle input { display: none; }
+.lang-toggle label { padding: 6px 16px; cursor: pointer; font-size: 14px; background: #f6f8fa; color: #57606a; user-select: none; }
+.lang-toggle label:first-of-type { border-right: 1px solid #d0d7de; }
+.lang-toggle input:checked + label { background: #0969da; color: #fff; }
+#en:checked ~ .zh-content,
+#zh:checked ~ .en-content { display: none; }
+</style>
 
-<p align="center">
-  <strong>一个运行在 Claude Code 中的多 Agent 协作开发团队</strong>
-</p>
+<div class="lang-toggle">
+  <input type="radio" name="lang" id="en-select" checked>
+  <label for="en-select">English</label>
+  <input type="radio" name="lang" id="zh-select">
+  <label for="zh-select">中文</label>
+</div>
 
-<p align="center">
-  策划师制定计划 · 开发者编写代码 · 测试员验证成果 · 项目经理统一调度
-</p>
-
----
-
-## 这是什么？
-
-Agent Team 是一个 Claude Code Skill，让你在 Claude Code 中拥有一个完整的软件开发团队：
-
-- **项目经理**（你对话中的主 Agent）— 理解需求、调度团队、汇报进度
-- **策划师** — 分析需求，制定详细的分步开发计划
-- **开发者** — 按计划编写代码，修复 Bug
-- **测试员** — 验证功能，浏览器截图，报告问题
-
-所有 Agent 通过共享 Markdown 文件实时通信，全程自动化。你只需要提需求，团队帮你完成。
-
-## 快速开始
-
-### 1. 复制 Skill 文件
-
-将 `agent-team/` 目录复制到你的 Claude Code skills 目录：
-
-```bash
-# macOS / Linux
-cp -r agent-team ~/.claude/skills/
-
-# Windows (PowerShell)
-Copy-Item -Recurse agent-team $env:USERPROFILE\.claude\skills\
-```
-
-### 2. 启动 Claude Code
-
-```bash
-claude
-```
-
-### 3. 激活团队
-
-```
-/agent-team
-```
-
-然后告诉项目经理你的需求，例如：
-
-> "帮我创建一个带计数功能的 HTML 页面"
-
-团队会自动完成：策划 → 开发 → 测试 → 报告。
-
-## 文件结构
-
-```
-agent-team/
-├── skill.md              # 项目经理编排规则
-├── prompts/
-│   ├── planner.md        # 策划师系统提示词
-│   ├── developer.md      # 开发者系统提示词
-│   └── tester.md         # 测试员系统提示词
-└── template/
-    └── comm-log.md       # 共享通信日志模板
-```
-
-## 工作流
-
-```
-用户需求 → 项目经理
-              │
-    ┌─────────┼─────────┐
-    ▼         ▼         ▼
- 策划师    开发者    测试员
- (计划)    (编码)    (测试)
-    │         │         │
-    └─────────┼─────────┘
-              ▼
-     agent-team-log.md
-     (共享通信日志)
-```
-
-## 自定义模型
-
-编辑 `skill.md` 底部的模型配置：
-
-```markdown
-- 策划师：opus     ← 可改为 sonnet / haiku
-- 开发者：opus     ← 可改为 sonnet / haiku
-- 测试员：sonnet   ← 可改为 opus / haiku
-```
-
-模型参数（opus / sonnet / haiku）映射到 `settings.json` 中配置的实际模型，兼容任何 Anthropic 兼容 API。
-
-## 详细文档
-
-完整创建指南和配置说明请参阅 [agent-team-创建指南.md](./agent-team-创建指南.md)。
-
----
+<div class="en-content">
 
 # Agent Team — Multi-Agent Dev Team for Claude Code
 
@@ -166,21 +83,24 @@ agent-team/
     └── comm-log.md       # Shared communication log template
 ```
 
-## Workflow
+## How It Works
 
 ```
-User Request → Project Manager
+User Request → Project Manager (your Claude Code session)
                     │
-    ┌───────────────┼───────────────┐
-    ▼               ▼               ▼
-  Planner       Developer        Tester
-  (designs)     (codes)          (tests)
-    │               │               │
-    └───────────────┼───────────────┘
-                    ▼
-           agent-team-log.md
-           (shared comm log)
+    1. Planner analyzes requirements, writes plan
+                    │
+    2. Developer (background) writes code
+                    │
+    3. Tester (background) runs tests, takes screenshots
+                    │
+    4. Bugs found? → SendMessage to SAME developer to fix
+       Same tester re-tests → loop until all pass
+                    │
+    5. PM reports results back to you
 ```
+
+The developer and tester run in the background (`run_in_background: true`) within each round. When bugs are found, the **same** developer fixes them via `SendMessage` — full context preserved, true ownership.
 
 ## Customizing Models
 
@@ -201,3 +121,114 @@ See [agent-team-创建指南.md](./agent-team-创建指南.md) for the full setu
 ## License
 
 MIT
+
+</div>
+
+<div class="zh-content">
+
+# Agent Team — Claude Code 多 Agent 协作团队
+
+<p align="center">
+  <strong>一个运行在 Claude Code 中的多 Agent 协作开发团队</strong>
+</p>
+
+<p align="center">
+  策划师制定计划 · 开发者编写代码 · 测试员验证成果 · 项目经理统一调度
+</p>
+
+---
+
+## 这是什么？
+
+Agent Team 是一个 Claude Code Skill，让你在 Claude Code 中拥有一个完整的软件开发团队：
+
+- **项目经理**（你对话中的主 Agent）— 理解需求、调度团队、汇报进度
+- **策划师** — 分析需求，制定详细的分步开发计划
+- **开发者** — 按计划编写代码，修复 Bug
+- **测试员** — 验证功能，浏览器截图，报告问题
+
+所有 Agent 通过共享 Markdown 文件实时通信，全程自动化。你只需要提需求，团队帮你完成。
+
+## 快速开始
+
+### 1. 复制 Skill 文件
+
+```bash
+# macOS / Linux
+cp -r agent-team ~/.claude/skills/
+
+# Windows (PowerShell)
+Copy-Item -Recurse agent-team $env:USERPROFILE\.claude\skills\
+```
+
+### 2. 启动 Claude Code
+
+```bash
+claude
+```
+
+### 3. 激活团队
+
+```
+/agent-team
+```
+
+然后告诉项目经理你的需求：
+
+> "帮我创建一个带计数功能的 HTML 页面"
+
+团队会自动完成：策划 → 开发 → 测试 → 报告。
+
+## 文件结构
+
+```
+agent-team/
+├── skill.md              # 项目经理编排规则
+├── prompts/
+│   ├── planner.md        # 策划师系统提示词
+│   ├── developer.md      # 开发者系统提示词
+│   └── tester.md         # 测试员系统提示词
+└── template/
+    └── comm-log.md       # 共享通信日志模板
+```
+
+## 工作原理
+
+```
+用户需求 → 项目经理（你的 Claude Code 会话）
+                │
+    1. 策划师分析需求，写入计划
+                │
+    2. 开发者（后台常驻）按计划写代码
+                │
+    3. 测试员（后台常驻）执行测试、截图
+                │
+    4. 发现 Bug？→ SendMessage 唤醒同一个开发者修复
+       同一个测试员重测 → 循环直到全部通过
+                │
+    5. 项目经理向你汇报结果
+```
+
+开发者和测试员在当前轮内以 `run_in_background: true` 方式后台常驻。测试发现 Bug 时，通过 `SendMessage` 唤醒**同一个人**修复——完整上下文保留，真正实现"谁写代码谁修复"。
+
+## 自定义模型
+
+编辑 `skill.md` 底部的模型配置：
+
+```markdown
+- 策划师：opus     ← 可改为 sonnet / haiku
+- 开发者：opus     ← 可改为 sonnet / haiku
+- 测试员：sonnet   ← 可改为 opus / haiku
+```
+
+模型参数映射到 `settings.json` 中配置的实际模型，兼容任何 Anthropic 兼容 API。
+
+## 详细文档
+
+完整创建指南和配置说明请参阅 [agent-team-创建指南.md](./agent-team-创建指南.md)。
+
+## 许可证
+
+MIT
+
+</div>
