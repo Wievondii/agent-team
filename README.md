@@ -25,7 +25,7 @@
   ================================================================================
 -->
 
-<p align="right"><a href="./README_CN.md">中文</a></p>
+<p align="right"><a href="./README.zh-CN.md">简体中文</a></p>
 
 # Agent Team — Multi-Agent Dev Team for Claude Code
 

@@ -26,7 +26,7 @@
   ================================================================================
 -->
 
-<p align="right"><a href="./README.md">English</a></p>
+<p align="right"><a href="./README.md">English README</a></p>
 
 # Agent Team — Claude Code 多 Agent 协作团队
 
