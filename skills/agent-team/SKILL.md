@@ -1,6 +1,5 @@
 ---
-description: 多 Agent 协作团队 — 策划师制定计划、开发者编写代码、测试员验证成果。通过共享 MD 文件通信，适合需要多轮迭代的开发任务。Use when user wants to delegate development work to a multi-agent team.
-disable-model-invocation: true
+description: 多 Agent 协作团队 — 策划师制定计划、开发者编写代码、测试员验证成果。通过共享 MD 文件通信，适合需要多轮迭代的开发任务。Use when user wants to delegate development work to a multi-agent team, build features, fix bugs, or needs a team to develop software.
 ---
 
 # Agent Team — 多 Agent 协作开发团队
