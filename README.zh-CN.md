@@ -32,7 +32,7 @@
 
 <p align="center">
   <strong>一个运行在 Claude Code 中的多 Agent 协作开发团队</strong><br>
-  策划师制定计划 · 开发者编写代码 · 测试员验证成果 · 项目经理统一调度
+  策划师制定计划 · 开发者编写代码 · 审查员把关 · 测试员验证成果 · 项目经理统一调度
 </p>
 
 ---
@@ -121,6 +121,7 @@ skills/team/
 ```markdown
 - 策划师：opus     ← 可改为 sonnet / haiku
 - 开发者：opus     ← 可改为 sonnet / haiku
+- 审查员：opus     ← 可改为 sonnet / haiku
 - 测试员：sonnet   ← 可改为 opus / haiku
 ```
 

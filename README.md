@@ -31,7 +31,7 @@
 
 <p align="center">
   <strong>A multi-agent development team running inside Claude Code</strong><br>
-  Planner designs · Developer codes · Tester verifies · PM orchestrates
+  Planner designs · Developer codes · Reviewer checks · Tester verifies · PM orchestrates
 </p>
 
 ---
@@ -120,6 +120,7 @@ Edit the model section at the bottom of `SKILL.md`:
 ```markdown
 - Planner：opus     ← change to sonnet / haiku
 - Developer：opus   ← change to sonnet / haiku
+- Reviewer：opus    ← change to sonnet / haiku
 - Tester：sonnet    ← change to opus / haiku
 ```
 
