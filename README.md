@@ -31,8 +31,12 @@
 
 <p align="center">
   <strong>A multi-agent development team running inside Claude Code</strong><br>
-  Planner designs · Developer codes · Reviewer checks · Tester verifies · PM orchestrates
+  **Planner designs · Developer codes · Reviewer checks · Tester verifies · PM orchestrates**
 </p>
+
+## About
+
+A Claude Code plugin that gives you a **4-agent development team** inside your terminal. The Project Manager orchestrates a Planner, Developer, Reviewer, and Tester — all communicating through a shared Markdown log. Background agents stay alive within each round, so the same person fixes their own bugs via `SendMessage`. One command to install, one command to activate.
 
 ---
 
