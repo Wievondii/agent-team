@@ -126,10 +126,6 @@ skills/team/
 
 模型参数映射到 `settings.json` 中配置的实际模型，兼容任何 Anthropic 兼容 API。
 
-## 详细文档
-
-完整创建指南请参阅 [agent-team-创建指南.md](./agent-team-创建指南.md)。
-
 ## 许可证
 
 MIT

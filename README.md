@@ -125,10 +125,6 @@ Edit the model section at the bottom of `SKILL.md`:
 
 Model keys map to your `settings.json` configuration. Compatible with any Anthropic-compatible API.
 
-## Documentation
-
-See [agent-team-创建指南.md](./agent-team-创建指南.md) for the full setup guide (in Chinese).
-
 ## License
 
 MIT
