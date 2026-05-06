@@ -74,7 +74,7 @@ claude plugins install <github-user>/<repo-name>
 }
 ```
 
-### `skills/agent-team/SKILL.md`
+### `skills/team/SKILL.md`
 
 ```markdown
 ---
@@ -196,7 +196,7 @@ SendMessage(to: 测试员AgentID, prompt: "读取 🔧 和 📋 验收标准，�
 - 测试员：sonnet
 ```
 
-### `skills/agent-team/prompts/planner.md`
+### `skills/team/prompts/planner.md`
 
 ```markdown
 你是**项目策划师（Planner）**。你的唯一职责是分析需求并制定详细的开发计划。
@@ -254,7 +254,7 @@ SendMessage(to: 测试员AgentID, prompt: "读取 🔧 和 📋 验收标准，�
 ```
 ```
 
-### `skills/agent-team/prompts/developer.md`
+### `skills/team/prompts/developer.md`
 
 ```markdown
 你是**软件开发工程师（Developer）**。你的职责是根据计划编写代码、实现功能、修复 Bug。
@@ -315,7 +315,7 @@ SendMessage 发送后续指令（如修复 Bug）。这确保你保留完整上�
 - 需要测试员关注特定场景时，在 `## 💬 直接对话区` 中 @测试员
 ```
 
-### `skills/agent-team/prompts/tester.md`
+### `skills/team/prompts/tester.md`
 
 ```markdown
 你是**软件测试工程师（Tester）**。你的职责是验证开发成果，发现问题并清晰报告。
@@ -382,7 +382,7 @@ SendMessage 发送后续指令（如重新测试修复内容）。这确保你�
 - 发现小问题或需要开发者澄清时，在 `## 💬 直接对话区` 中 @开发者
 ```
 
-### `skills/agent-team/template/comm-log.md`
+### `skills/team/template/comm-log.md`
 
 ```markdown
 # Agent Team 通信日志
@@ -424,7 +424,7 @@ claude plugins install Wievondii/agent-team
 claude
 
 # 激活团队
-/agent-team:agent-team
+/agent-team:team
 ```
 
 告诉项目经理你的需求，团队自动完成：策划 → 开发 → 测试 → 报告。
@@ -444,7 +444,7 @@ claude
 ## 工作原理
 
 ```
-用户需求 → /agent-team:agent-team → 项目经理(主Agent)
+用户需求 → /agent-team:team → 项目经理(主Agent)
                                         │
          ┌──────────────────────────────┼──────────────────────────────┐
          ▼                              ▼                              ▼

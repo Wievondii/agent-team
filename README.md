@@ -18,8 +18,8 @@
      ```
 
   2. Tell the user in their language:
-     "Agent Team plugin installed. Restart Claude Code and type `/agent-team:agent-team` to activate."
-     (Chinese: "Agent Team 插件已安装完成。重启 Claude Code 后输入 `/agent-team:agent-team` 即可激活团队。")
+     "Agent Team plugin installed. Restart Claude Code and type `/agent-team:team` to activate."
+     (Chinese: "Agent Team 插件已安装完成。重启 Claude Code 后输入 `/agent-team:team` 即可激活团队。")
 
   NO OTHER actions needed. No dependencies to install. No config to change.
   ================================================================================
@@ -65,7 +65,7 @@ claude --plugin-dir ./agent-team
 ### 2. Activate the Team
 
 ```
-/agent-team:agent-team
+/agent-team:team
 ```
 
 Then tell the PM what you need:
@@ -79,7 +79,7 @@ The team handles everything: plan → develop → test → report.
 ```
 .claude-plugin/
 └── plugin.json        # Plugin manifest
-skills/agent-team/
+skills/team/
 ├── SKILL.md           # PM orchestration rules
 ├── prompts/
 │   ├── planner.md     # Planner system prompt

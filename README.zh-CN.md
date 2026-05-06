@@ -18,7 +18,7 @@
      ```
 
   2. 告知用户：
-     "Agent Team 插件已安装完成。重启 Claude Code 后输入 `/agent-team:agent-team` 即可激活团队。"
+     "Agent Team 插件已安装完成。重启 Claude Code 后输入 `/agent-team:team` 即可激活团队。"
 
   可选：询问用户是否需要自定义 SKILL.md 底部的模型配置
 
@@ -66,7 +66,7 @@ claude --plugin-dir ./agent-team
 ### 2. 激活团队
 
 ```
-/agent-team:agent-team
+/agent-team:team
 ```
 
 然后告诉项目经理你的需求：
@@ -80,7 +80,7 @@ claude --plugin-dir ./agent-team
 ```
 .claude-plugin/
 └── plugin.json        # 插件清单
-skills/agent-team/
+skills/team/
 ├── SKILL.md           # 项目经理编排规则
 ├── prompts/
 │   ├── planner.md     # 策划师系统提示词
