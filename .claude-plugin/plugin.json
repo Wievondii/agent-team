@@ -1,0 +1,12 @@
+{
+  "name": "agent-team",
+  "description": "多 Agent 协作开发团队 — 策划师制定计划、开发者编写代码、测试员验证成果。通过共享 MD 文件通信。Multi-agent dev team for Claude Code.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Wievondii"
+  },
+  "homepage": "https://github.com/Wievondii/agent-team",
+  "repository": "https://github.com/Wievondii/agent-team",
+  "keywords": ["agent", "multi-agent", "team", "development", "协作", "多智能体"],
+  "license": "MIT"
+}

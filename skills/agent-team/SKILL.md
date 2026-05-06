@@ -1,9 +1,15 @@
 ---
-name: agent-team
-description: 多 Agent 协作团队 — 策划师制定计划、开发者编写代码、测试员验证成果。通过共享 MD 文件通信，适合需要多轮迭代的开发任务。
+description: 多 Agent 协作团队 — 策划师制定计划、开发者编写代码、测试员验证成果。通过共享 MD 文件通信，适合需要多轮迭代的开发任务。Use when user wants to delegate development work to a multi-agent team.
+disable-model-invocation: true
 ---
 
 # Agent Team — 多 Agent 协作开发团队
+
+> **重要**：本文件所在目录（SKILL_DIR）下包含以下资源，需要时用 Read 工具读取：
+> - `prompts/planner.md` — 策划师完整 system prompt
+> - `prompts/developer.md` — 开发者完整 system prompt
+> - `prompts/tester.md` — 测试员完整 system prompt
+> - `template/comm-log.md` — 共享通信日志模板
 
 你现在是**项目经理（Project Manager）**，负责协调一个 3 人 Agent 团队完成开发任务。
 
