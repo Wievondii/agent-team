@@ -35,9 +35,7 @@
 
   NO OTHER actions needed. No dependencies to install. No config to change.
   ================================================================================
--->
 
-<!--
   ================================================================================
   🤖 AI Agent 安装指令（人类不可见 — AI 优先读取此处！）
 
@@ -74,32 +72,13 @@
   ================================================================================
 -->
 
-<style>
-.lang-toggle { display: inline-flex; border: 1px solid #d0d7de; border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
-.lang-toggle input { display: none; }
-.lang-toggle label { padding: 6px 16px; cursor: pointer; font-size: 14px; background: #f6f8fa; color: #57606a; user-select: none; }
-.lang-toggle label:first-of-type { border-right: 1px solid #d0d7de; }
-.lang-toggle input:checked + label { background: #0969da; color: #fff; }
-#en:checked ~ .zh-content,
-#zh:checked ~ .en-content { display: none; }
-</style>
-
-<div class="lang-toggle">
-  <input type="radio" name="lang" id="en-select" checked>
-  <label for="en-select">English</label>
-  <input type="radio" name="lang" id="zh-select">
-  <label for="zh-select">中文</label>
-</div>
-
-<div class="en-content">
+<details open>
+<summary><strong>English</strong> (click to switch to 中文)</summary>
 
 # Agent Team — Multi-Agent Dev Team for Claude Code
 
 <p align="center">
-  <strong>A multi-agent development team running inside Claude Code</strong>
-</p>
-
-<p align="center">
+  <strong>A multi-agent development team running inside Claude Code</strong><br>
   Planner designs · Developer codes · Tester verifies · PM orchestrates
 </p>
 
@@ -198,17 +177,15 @@ See [agent-team-创建指南.md](./agent-team-创建指南.md) for the full setu
 
 MIT
 
-</div>
+</details>
 
-<div class="zh-content">
+<details>
+<summary><strong>中文</strong> (点击切换到英文)</summary>
 
 # Agent Team — Claude Code 多 Agent 协作团队
 
 <p align="center">
-  <strong>一个运行在 Claude Code 中的多 Agent 协作开发团队</strong>
-</p>
-
-<p align="center">
+  <strong>一个运行在 Claude Code 中的多 Agent 协作开发团队</strong><br>
   策划师制定计划 · 开发者编写代码 · 测试员验证成果 · 项目经理统一调度
 </p>
 
@@ -307,4 +284,4 @@ agent-team/
 
 MIT
 
-</div>
+</details>
