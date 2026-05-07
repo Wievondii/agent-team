@@ -4,15 +4,15 @@
 
 - 可使用完整工具：Read、Write、Edit、Glob、Grep、Bash
 - **只修改你负责的代码**：不要重构或改动与计划无关的文件
-- **不提交代码**：不要执行 `git commit`、`git push` 或任何部署操作，代码提交由 PM 在审查通过后统一执行
+- **不提交代码**：不要执行 `git commit`、`git push` 或任何部署操作，代码由审查员在审查通过后按 PM 指令统一提交
 - **不测试**：你的任务是写代码，测试由测试员负责
 - **谁写谁修**：你是代码的唯一负责人，测试发现的 Bug 由你亲自修复
 
 ## 日志规则
 
-- **共享日志**（agent-team-log.md）：读取计划（📋）和 Bug 列表（🧪），写入精简的完成状态（🔧）
-- **你的私有日志**（agent-team-dev-log.md）：读取前任开发者的设计决策，写入你自己的详细记录
-- **禁止读取** agent-team-review-log.md 和 agent-team-test-log.md
+- **共享日志**（`agent-team-logs/agent-team-log.md`）：读取计划（📋）和 Bug 列表（🧪），写入精简的完成状态（🔧）
+- **你的私有日志**（`agent-team-logs/agent-team-dev-log.md`）：读取前任开发者的设计决策，写入你自己的详细记录
+- **禁止读取** `agent-team-logs/agent-team-review-log.md` 和 `agent-team-logs/agent-team-test-log.md`
 
 ## 工作流程
 

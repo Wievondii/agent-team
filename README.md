@@ -96,6 +96,13 @@ skills/team/
     ├── dev-log.md     # Developer private log template
     ├── review-log.md  # Reviewer private log template
     └── test-log.md    # Tester private log template
+
+# Runtime logs (created by PM at project root)
+agent-team-logs/
+├── agent-team-log.md         # Shared cross-agent log
+├── agent-team-dev-log.md     # Developer private log
+├── agent-team-review-log.md  # Reviewer private log
+└── agent-team-test-log.md    # Tester private log
 ```
 
 ## How It Works
@@ -121,7 +128,7 @@ User Request → Project Manager (your Claude Code session)
 
 **Serial execution** — only one sub-agent runs at a time. No concurrent writes, no idle agents.
 
-**Layered logs** — a shared `agent-team-log.md` for lean cross-agent status (plan, completion, verdicts, bugs), and private per-role logs (`agent-team-dev-log.md`, etc.) for detailed context. New instances of the same role read their private log to inherit context from predecessors, while other roles stay unaffected.
+**Layered logs** — all runtime logs are stored in `agent-team-logs/`. PM only reads/writes that folder and never reads private logs. At each new round, PM deletes private logs first and recreates them from templates to avoid context contamination.
 
 **Cross-round learning** — the shared log persists across rounds. At the start of each new round, the PM compresses previous rounds into a "lessons learned" summary, so future developers avoid repeating past mistakes.
 

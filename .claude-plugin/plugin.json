@@ -1,6 +1,6 @@
 {
   "name": "agent-team",
-  "description": "多 Agent 协作开发团队 — 策划师制定计划、开发者编写代码、测试员验证成果。通过共享 MD 文件通信。Multi-agent dev team for Claude Code.",
+  "description": "多 Agent 协作开发团队 — 策划师制定计划、开发者编写代码、审查员把关、测试员验证成果。通过共享+私有分层日志通信。Multi-agent dev team for Claude Code with planner, developer, reviewer, and tester.",
   "version": "1.0.0",
   "author": {
     "name": "Wievondii"
