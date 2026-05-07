@@ -36,7 +36,7 @@
 
 ## About
 
-A Claude Code plugin that gives you a **4-agent development team** inside your terminal. The Project Manager orchestrates a Planner, Developer, Reviewer, and Tester — all communicating through a shared Markdown log. Background agents stay alive within each round, so the same person fixes their own bugs via `SendMessage`. One command to install, one command to activate.
+A Claude Code plugin that gives you a **4-agent development team** inside your terminal. The Project Manager orchestrates a Planner, Developer, Reviewer, and Tester — all working in strict sequence. Agents communicate through a layered Markdown log system: a shared log for cross-agent coordination, and private logs for role-specific context that survives across instances. One command to install, one command to activate.
 
 ---
 
@@ -50,7 +50,7 @@ Agent Team is a Claude Code plugin that gives you a complete software developmen
 - **Reviewer** — reviews code for standards, architecture, and security (opus-powered)
 - **Tester** — verifies features, takes browser screenshots, reports issues
 
-All agents communicate through a shared Markdown file. Fully automated — you just describe what you want.
+All agents work in strict sequence — one at a time, no concurrent execution. Communication happens through a layered log system that separates cross-agent status from role-specific details.
 
 ## Quick Start
 
@@ -92,7 +92,10 @@ skills/team/
 │   ├── reviewer.md    # Reviewer system prompt
 │   └── tester.md      # Tester system prompt
 └── template/
-    └── comm-log.md    # Shared communication log template
+    ├── comm-log.md    # Shared log template
+    ├── dev-log.md     # Developer private log template
+    ├── review-log.md  # Reviewer private log template
+    └── test-log.md    # Tester private log template
 ```
 
 ## How It Works
@@ -101,21 +104,26 @@ skills/team/
 User Request → Project Manager (your Claude Code session)
                     │
     1. Planner analyzes requirements, writes plan
+       (one-shot, auto-destroys)
                     │
-    2. Developer (background) writes code
+    2. Developer writes code
+       (serial, waits for completion)
                     │
-    3. Reviewer (background, opus) checks code quality
-       Fail? → back to same Developer to fix
+    3. Reviewer (opus) checks code quality
+       Fail? → new Developer instance fixes → new Reviewer re-checks
                     │
-    4. Tester (background) runs tests, takes screenshots
-                    │
-    5. Bugs found? → same Dev → same Reviewer → same Tester
+    4. Tester runs tests, takes screenshots
+       Bugs? → new Dev → new Reviewer → new Tester
        Loop until all pass (max 3)
                     │
-    6. PM reports results back to you
+    5. PM reports results, compresses logs for next round
 ```
 
-Developer, Reviewer, and Tester run in the background (`run_in_background: true`) within each round. When issues are found, the **same** developer fixes them and the **same** reviewer re-checks — full context preserved, true ownership.
+**Serial execution** — only one sub-agent runs at a time. No concurrent writes, no idle agents.
+
+**Layered logs** — a shared `agent-team-log.md` for lean cross-agent status (plan, completion, verdicts, bugs), and private per-role logs (`agent-team-dev-log.md`, etc.) for detailed context. New instances of the same role read their private log to inherit context from predecessors, while other roles stay unaffected.
+
+**Cross-round learning** — the shared log persists across rounds. At the start of each new round, the PM compresses previous rounds into a "lessons learned" summary, so future developers avoid repeating past mistakes.
 
 ## Customizing Models
 
