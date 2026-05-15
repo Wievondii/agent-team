@@ -1,0 +1,33 @@
+{
+  "name": "wievondii-agent-team",
+  "owner": {
+    "name": "Wievondii",
+    "url": "https://github.com/Wievondii"
+  },
+  "metadata": {
+    "description": "Single-plugin marketplace that distributes the Agent Team multi-agent dev team plugin.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "agent-team",
+      "source": ".",
+      "description": "Multi-agent dev team for Claude Code: a Project Manager orchestrates a Planner, Developer, Reviewer, and Tester through a layered shared/private Markdown log system.",
+      "version": "1.0.0",
+      "category": "agents",
+      "keywords": [
+        "agent",
+        "multi-agent",
+        "team",
+        "workflow",
+        "planner",
+        "developer",
+        "reviewer",
+        "tester"
+      ],
+      "license": "MIT",
+      "homepage": "https://github.com/Wievondii/agent-team",
+      "repository": "https://github.com/Wievondii/agent-team"
+    }
+  ]
+}

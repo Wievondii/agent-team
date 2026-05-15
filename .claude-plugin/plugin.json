@@ -1,12 +1,32 @@
 {
   "name": "agent-team",
-  "description": "多 Agent 协作开发团队 — 策划师制定计划、开发者编写代码、审查员把关、测试员验证成果。通过共享+私有分层日志通信。Multi-agent dev team for Claude Code with planner, developer, reviewer, and tester.",
   "version": "1.0.0",
+  "description": "多 Agent 协作开发团队 — 策划师制定计划、开发者编写代码、审查员把关、测试员验证成果。通过共享+私有分层日志通信。Multi-agent dev team for Claude Code with a Project Manager orchestrating a Planner, Developer, Reviewer, and Tester.",
   "author": {
-    "name": "Wievondii"
+    "name": "Wievondii",
+    "url": "https://github.com/Wievondii"
   },
   "homepage": "https://github.com/Wievondii/agent-team",
-  "repository": "https://github.com/Wievondii/agent-team",
-  "keywords": ["agent", "multi-agent", "team", "development", "协作", "多智能体"],
-  "license": "MIT"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Wievondii/agent-team.git"
+  },
+  "license": "MIT",
+  "readme": "README.md",
+  "keywords": [
+    "agent",
+    "multi-agent",
+    "team",
+    "development",
+    "workflow",
+    "planner",
+    "developer",
+    "reviewer",
+    "tester",
+    "协作",
+    "多智能体"
+  ],
+  "commands": "./commands",
+  "agents": "./agents",
+  "skills": "./skills"
 }
