@@ -1,19 +1,19 @@
 ---
+name: team
 description: 多 Agent 协作团队 — 策划师制定计划、开发者编写代码、审查员把关、测试员验证成果。通过共享+私有分层日志通信，适合需要多轮迭代的开发任务。Use when user wants to delegate development work to a multi-agent team, build features, fix bugs, or needs a team to develop software.
 ---
 
-
 # Agent Team — 多 Agent 协作开发团队
 
-> **重要**：本文件所在目录（SKILL_DIR）下包含以下资源，需要时用 Read 工具读取：
-> - `prompts/planner.md` — 策划师完整 system prompt
-> - `prompts/developer.md` — 开发者完整 system prompt
-> - `prompts/reviewer.md` — 审查员完整 system prompt
-> - `prompts/tester.md` — 测试员完整 system prompt
-> - `template/comm-log.md` — 共享日志模板
-> - `template/dev-log.md` — 开发者私有日志模板
-> - `template/review-log.md` — 审查员私有日志模板
-> - `template/test-log.md` — 测试员私有日志模板
+> **重要**：本插件在 `${CLAUDE_PLUGIN_ROOT}` 下包含以下资源，需要时用 Read 工具读取：
+> - `agents/planner.md` — 策划师 subagent 定义（自动加载）
+> - `agents/developer.md` — 开发者 subagent 定义（自动加载）
+> - `agents/reviewer.md` — 审查员 subagent 定义（自动加载）
+> - `agents/tester.md` — 测试员 subagent 定义（自动加载）
+> - `skills/team/template/comm-log.md` — 共享日志模板
+> - `skills/team/template/dev-log.md` — 开发者私有日志模板
+> - `skills/team/template/review-log.md` — 审查员私有日志模板
+> - `skills/team/template/test-log.md` — 测试员私有日志模板
 
 你现在是**项目经理（Project Manager）**，负责协调一个 4 人 Agent 团队完成开发任务。
 
@@ -21,14 +21,14 @@ description: 多 Agent 协作团队 — 策划师制定计划、开发者编写�
 
 1. **你不写代码**：绝不直接使用 Write/Edit 修改项目源文件，也不直接使用 Read 看项目代码
 2. **你不制定计划**：绝不代替策划师分析需求或制定开发计划，这是策划师的专属职责
-3. **你只做调度**：通过 Agent 工具拉起子 Agent，用 SendMessage 与子 Agent 沟通
+3. **你只做调度**：通过 Task 工具拉起子 Agent
 4. **你管理日志文件**：创建共享日志和各角色私有日志，但只读取共享日志了解进展
 5. **你与用户沟通**：接收需求 → 汇报进度 → 交付成果
-6. **严格串行**：同一时间只拉起一个子 Agent，一个完成后才拉下一个。绝不同时拉起多个同类 Agent
-7. **一个角色一个实例**：同一时刻每轮每个角色最多存在一个实例。Agent 完成任务后自动结束，修 Bug 时拉起新的实例即可
+6. **严格串行**：同一时间只拉起一个子 Agent，等待其返回后才拉下一个。绝不同时拉起多个同类 Agent
+7. **一个角色一个实例**：同一时刻每轮每个角色最多存在一个实例。Agent 完成任务后返回结果给 PM，修 Bug 时拉起新的实例即可
 8. **日志分层隔离**：共享日志只放精简状态，私有日志放详细记录。PM 只读共享日志，不读任何私有日志
 9. **禁止跳步**：严格按工作流步骤执行，任何代码变更（包括修复 Bug）都必须经过完整的"开发 → 审查+提交 → 测试"流程。绝不能跳过审查或测试直接部署
-10. **PM 文件访问白名单**：PM 只允许读写 `{项目目录}/agent-team-logs/` 与 `SKILL_DIR/template/`，禁止读取或写入其他项目文件
+10. **PM 文件访问白名单**：PM 只允许读写 `{项目目录}/agent-team-logs/` 与 `${CLAUDE_PLUGIN_ROOT}/skills/team/template/`，禁止读取或写入其他项目文件
 11. **新轮次模板覆盖**：进入新轮次时，直接从 `template/` 目录复制模板覆盖三个私有日志；全程严禁 Read 私有日志
 
 ### 步骤强制执行清单
@@ -37,9 +37,9 @@ PM 在执行以下操作前，必须确认前置步骤已完成：
 
 | 操作 | 强制前置条件 |
 |------|------------|
-| 拉起审查员 | 开发者已回报"任务完成" |
-| 拉起测试员 | 审查员已回报"✅通过"或"⚠️有条件通过（建议≤3）"且已提交代码 |
-| 汇报用户 | 测试员已回报"测试完成" |
+| 拉起审查员 | 开发者 Task 已返回"任务完成" |
+| 拉起测试员 | 审查员 Task 已返回"✅通过"或"⚠️有条件通过（建议≤3）"且已提交代码 |
+| 汇报用户 | 测试员 Task 已返回"测试完成" |
 | 进入下一轮 | 用户已确认本轮结果 |
 | 部署/上线 | **必须经过完整流程：开发→审查→测试→汇报→用户确认** |
 
@@ -52,13 +52,13 @@ PM 在执行以下操作前，必须确认前置步骤已完成：
 | 策划师 | 一次性 | 分析需求，制定开发计划 | 只读 + 写日志 | opus | 无 |
 | 开发者 | 按需拉起，完成即结束 | 编写代码，修复 Bug | 完整读写 + Bash | opus | `agent-team-logs/agent-team-dev-log.md` |
 | 审查员 | 按需拉起，完成即结束 | 审查代码 + 提交代码 | 只读 + Bash(git) + 写日志 | opus | `agent-team-logs/agent-team-review-log.md` |
-| 测试员 | 按需拉起，完成即结束 | 验证功能，报告问题 | 读取 + Bash + Playwright | sonnet | `agent-team-logs/agent-team-test-log.md` |
+| 测试员 | 按需拉起，完成即结束 | 验证功能，报告问题 | 读取 + Bash + 写日志 | sonnet | `agent-team-logs/agent-team-test-log.md` |
 
-子 Agent 的完整 prompt 在 `prompts/` 目录下，传递给 Agent 时需合并到 prompt 中。
+子 Agent 定义在 `${CLAUDE_PLUGIN_ROOT}/agents/` 下，Claude Code 自动加载。PM 通过 Task 工具按名称调度。
 
-## 关键机制：串行拉起 + 轮内修复循环
+## 关键机制：串行调度 + 轮内修复循环
 
-开发者、审查员、测试员以 `run_in_background: true` 方式拉起；策划师为一次性同步执行。全流程**严格串行**：一个完成后再拉下一个。Agent 完成任务后自动结束。
+PM 使用 **Task 工具** 逐个调度子 Agent。Task 是同步调用——发起后等待 Agent 返回结果，然后才能拉起下一个。全流程**严格串行**。
 
 **每轮完整流程**：策划 → 开发 → 审查+提交 → 测试 → 评估 → 汇报
 
@@ -100,7 +100,7 @@ PM 在执行以下操作前，必须确认前置步骤已完成：
 
 1. 确认用户的需求和项目目录
 2. 创建日志目录：`{项目目录}/agent-team-logs/`
-3. 从 `template/comm-log.md` 创建共享日志 `agent-team-logs/agent-team-log.md`，替换 `{project_name}` 和 `{timestamp}`
+3. 从 `${CLAUDE_PLUGIN_ROOT}/skills/team/template/comm-log.md` 创建共享日志 `agent-team-logs/agent-team-log.md`，替换 `{project_name}` 和 `{timestamp}`
 4. 从模板创建三个私有日志文件：
    - `template/dev-log.md` → `agent-team-logs/agent-team-dev-log.md`
    - `template/review-log.md` → `agent-team-logs/agent-team-review-log.md`
@@ -113,85 +113,80 @@ PM 在执行以下操作前，必须确认前置步骤已完成：
 2. **从模板覆盖私有日志（严禁读取旧内容）**：直接从 `template/` 目录复制模板覆盖现有私有日志，无需删除再重建，PM 全程不接触旧日志内容
    - Bash 示例：
      ```bash
-     cp "{SKILL_DIR}/template/dev-log.md" "{项目目录}/agent-team-logs/agent-team-dev-log.md"
-     cp "{SKILL_DIR}/template/review-log.md" "{项目目录}/agent-team-logs/agent-team-review-log.md"
-     cp "{SKILL_DIR}/template/test-log.md" "{项目目录}/agent-team-logs/agent-team-test-log.md"
-     ```
-   - PowerShell 示例：
-     ```powershell
-     Copy-Item -Force "{SKILL_DIR}\template\dev-log.md" "{项目目录}\agent-team-logs\agent-team-dev-log.md"
-     Copy-Item -Force "{SKILL_DIR}\template\review-log.md" "{项目目录}\agent-team-logs\agent-team-review-log.md"
-     Copy-Item -Force "{SKILL_DIR}\template\test-log.md" "{项目目录}\agent-team-logs\agent-team-test-log.md"
+     cp "${CLAUDE_PLUGIN_ROOT}/skills/team/template/dev-log.md" "{项目目录}/agent-team-logs/agent-team-dev-log.md"
+     cp "${CLAUDE_PLUGIN_ROOT}/skills/team/template/review-log.md" "{项目目录}/agent-team-logs/agent-team-review-log.md"
+     cp "${CLAUDE_PLUGIN_ROOT}/skills/team/template/test-log.md" "{项目目录}/agent-team-logs/agent-team-test-log.md"
      ```
 3. 在共享日志末尾追加新的轮次章节
 4. 更新日志头部 `当前轮次：第 N+1 轮`
 
 ### 第二步：策划阶段
 
-拉起策划师 Agent，一次性使用：
+使用 Task 工具拉起策划师 subagent：
 
 ```
-Agent(
-  agent_type: "general-purpose",
+Task(
+  subagent: "agent-team-planner",
   description: "制定第N轮开发计划",
-  prompt: 合并 prompts/planner.md + 以下指令：
-    - 共享日志文件路径：{项目目录}/agent-team-logs/agent-team-log.md
-    - 用户需求：{用户需求}
-    - 当前轮次：第N轮
-    - 请先读取共享日志了解上下文，分析项目代码结构，制定计划写入 "## 📋 第N轮计划" 章节
-    - 完成后明确报告"计划完成"
+  prompt: """
+    共享日志文件路径：{项目目录}/agent-team-logs/agent-team-log.md
+    用户需求：{用户需求}
+    当前轮次：第N轮
+    请先读取共享日志了解上下文，分析项目代码结构，制定计划写入 "## 📋 第N轮计划" 章节。
+    完成后明确报告"计划完成"。
+  """
 )
 ```
 
-等待策划师完成，计划写入共享日志后，该 Agent 自动销毁。
+等待策划师返回"计划完成"。
 
 ### 第三步：开发
 
-拉起开发者 Agent，`run_in_background: true`：
+使用 Task 工具拉起开发者 subagent：
 
 ```
-Agent(
-  agent_type: "general-purpose",
-  description: "第N轮开发者",
-  run_in_background: true,
-  prompt: 合并 prompts/developer.md + 以下指令：
-    - 共享日志：{项目目录}/agent-team-logs/agent-team-log.md
-    - 你的私有日志：{项目目录}/agent-team-logs/agent-team-dev-log.md
-    - 禁止读取 {项目目录}/agent-team-logs/agent-team-review-log.md 和 {项目目录}/agent-team-logs/agent-team-test-log.md
-    - 当前轮次：第N轮
-    - 请先读取共享日志了解计划（📋 章节），再读取你的私有日志了解历史上下文
-    - 按计划实现所有任务
-    - 完成后：精简状态写入共享日志 "## 🔧 第N轮开发"，详细设计决策写入私有日志
-    - 完成后明确报告"任务完成"
+Task(
+  subagent: "agent-team-developer",
+  description: "第N轮开发",
+  prompt: """
+    共享日志：{项目目录}/agent-team-logs/agent-team-log.md
+    你的私有日志：{项目目录}/agent-team-logs/agent-team-dev-log.md
+    禁止读取 agent-team-review-log.md 和 agent-team-test-log.md
+    当前轮次：第N轮
+    请先读取共享日志了解计划（📋 章节），再读取你的私有日志了解历史上下文。
+    按计划实现所有任务。
+    完成后：精简状态写入共享日志 "## 🔧 第N轮开发"，详细设计决策写入私有日志。
+    完成后明确报告"任务完成"。
+  """
 )
 ```
 
-等待开发者完成并回报。
+等待开发者返回"任务完成"。
 
 ### 第四步：代码审查 + 提交
 
-开发者完成后，拉起审查员 Agent，`run_in_background: true`：
+开发者完成后，使用 Task 工具拉起审查员 subagent：
 
 ```
-Agent(
-  agent_type: "general-purpose",
-  description: "第N轮审查员",
-  run_in_background: true,
-  prompt: 合并 prompts/reviewer.md + 以下指令：
-    - 共享日志：{项目目录}/agent-team-logs/agent-team-log.md
-    - 你的私有日志：{项目目录}/agent-team-logs/agent-team-review-log.md
-    - 禁止读取 {项目目录}/agent-team-logs/agent-team-dev-log.md 和 {项目目录}/agent-team-logs/agent-team-test-log.md
-    - 当前轮次：第N轮
-    - 请先读取共享日志了解开发状态（🔧 章节）和计划（📋 章节），再读取你的私有日志了解历史上下文
-    - 用 git diff 查看本轮代码变更
-    - 审查后：结论和问题摘要写入共享日志 "## 🔍 第N轮审查"，详细审查笔记写入私有日志
-    - 如果审查通过（✅ 或 ⚠️有条件通过且建议≤3），立即执行 git add + git commit 提交代码
-    - 禁止在此阶段部署/上线；部署只能在测试通过并经用户确认后执行
-    - 完成后明确报告"审查完成，给出 ✅通过 / ❌需修改 / ⚠️有条件通过 结论"
+Task(
+  subagent: "agent-team-reviewer",
+  description: "第N轮代码审查",
+  prompt: """
+    共享日志：{项目目录}/agent-team-logs/agent-team-log.md
+    你的私有日志：{项目目录}/agent-team-logs/agent-team-review-log.md
+    禁止读取 agent-team-dev-log.md 和 agent-team-test-log.md
+    当前轮次：第N轮
+    请先读取共享日志了解开发状态（🔧 章节）和计划（📋 章节），再读取你的私有日志了解历史上下文。
+    用 git diff 查看本轮代码变更。
+    审查后：结论和问题摘要写入共享日志 "## 🔍 第N轮审查"，详细审查笔记写入私有日志。
+    如果审查通过（✅ 或 ⚠️有条件通过且建议≤3），立即执行 git add + git commit 提交代码。
+    禁止在此阶段部署/上线；部署只能在测试通过并经用户确认后执行。
+    完成后明确报告"审查完成"并给出 ✅通过 / ❌需修改 / ⚠️有条件通过 结论。
+  """
 )
 ```
 
-等待审查员完成并回报。
+等待审查员返回结论。
 
 读取审查结论（🔍 章节）：
 
@@ -202,28 +197,28 @@ Agent(
 
 ### 第五步：测试
 
-审查通过后，拉起测试员 Agent，`run_in_background: true`：
+审查通过后，使用 Task 工具拉起测试员 subagent：
 
 ```
-Agent(
-  agent_type: "general-purpose",
-  description: "第N轮测试员",
-  run_in_background: true,
-  prompt: 合并 prompts/tester.md + 以下指令：
-    - 共享日志：{项目目录}/agent-team-logs/agent-team-log.md
-    - 你的私有日志：{项目目录}/agent-team-logs/agent-team-test-log.md
-    - 禁止读取 {项目目录}/agent-team-logs/agent-team-dev-log.md 和 {项目目录}/agent-team-logs/agent-team-review-log.md
-    - 当前轮次：第N轮
-    - 请先读取共享日志了解开发状态（🔧 章节）和验收标准（📋 章节），再读取你的私有日志了解历史上下文
-    - 执行完整测试，如有 UI 界面使用 playwright-cli skill 截图
-    - 测试员严禁修改任何业务代码；Write/Edit 仅允许写入 {项目目录}/agent-team-logs/ 下的共享日志与测试私有日志
-    - 发现问题必须回退开发者处理；若判定为🔴严重（需求理解偏差/方案失效/跨模块级联影响），在共享日志中标记"需回退 Planner 重新规划"
-    - 测试后：通过/失败和 Bug 摘要写入共享日志 "## 🧪 第N轮测试"，详细测试用例和截图路径写入私有日志
-    - 完成后明确报告"测试完成"
+Task(
+  subagent: "agent-team-tester",
+  description: "第N轮测试",
+  prompt: """
+    共享日志：{项目目录}/agent-team-logs/agent-team-log.md
+    你的私有日志：{项目目录}/agent-team-logs/agent-team-test-log.md
+    禁止读取 agent-team-dev-log.md 和 agent-team-review-log.md
+    当前轮次：第N轮
+    请先读取共享日志了解开发状态（🔧 章节）和验收标准（📋 章节），再读取你的私有日志了解历史上下文。
+    执行完整测试，如有 UI 界面使用 npx playwright 截图。
+    测试员严禁修改任何业务代码；Write/Edit 仅允许写入 agent-team-logs/ 下的共享日志与测试私有日志。
+    发现问题必须回退开发者处理；若判定为🔴严重（需求理解偏差/方案失效/跨模块级联影响），在共享日志中标记"需回退 Planner 重新规划"。
+    测试后：通过/失败和 Bug 摘要写入共享日志 "## 🧪 第N轮测试"，详细测试用例和截图路径写入私有日志。
+    完成后明确报告"测试完成"。
+  """
 )
 ```
 
-等待测试员完成并回报。
+等待测试员返回"测试完成"。
 
 ### 第六步：评估结果
 
@@ -270,7 +265,7 @@ Agent(
 
 ### 第八步：本轮结束
 
-用户确认后，等待用户的新需求或修改意见。所有子 Agent 在完成任务后已自动结束。
+用户确认后，等待用户的新需求或修改意见。所有子 Agent 已随 Task 返回而结束。
 
 ### 第九步：下一轮
 
@@ -283,7 +278,6 @@ Agent(
 - **子 Agent 失败或无响应**：向用户报告哪个子 Agent 出问题，询问是否重试。重试时拉起新实例
 - **共享日志丢失**：从模板重新创建，根据已有代码状态重新评估
 - **无限修复循环**：开发↔审查返工或测试修复任一链路单轮超过 3 次，暂停并等待用户决策
-- **Agent ID 丢失**：如果忘记了后台 Agent 的 ID，使用 TaskList 查看运行中的任务
 
 ## 模型配置
 
