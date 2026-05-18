@@ -50,6 +50,10 @@ tech_stack:
   framework: ""
   package_manager: ""
   test_framework: ""        # 你选定的单元测试框架（vitest/jest/pytest/cargo-test/...）
+execution_strategy:         # 🔑 必填：明确告诉 PM 如何调度 Developer
+  mode: parallel            # parallel | serial | grouped
+  parallel_groups: []       # 仅 mode=grouped 时填，每组同时执行，组间串行
+  rationale: "三个模块完全独立，可同消息并发拉起"
 modules:
   - name: <module-name>
     developer: dev-1         # dev-N 形式
@@ -234,6 +238,45 @@ Developer 实现接口时**必须**为这些 case 写单元测试。Tester 验�
 - 引擎/主控/编排模块的 Developer
 - 改动 shared_files 最多的 Developer
 - 没有"主"模块时选 dev-1（Developer 工作量最少的，便于他承担集成）
+
+---
+
+### 第 7.5 步：设计执行策略（🔑 v2.0.1 关键）
+
+**这一步是修复"PM 实际串行调度"的核心。** Planner 必须把"并行性"作为显式设计输出，PM 才会真的并行调度。
+
+填 `execution_strategy.mode`：
+
+| mode | 适用场景 | PM 行为 |
+|------|---------|---------|
+| `parallel` | 所有模块完全独立（默认）| 同一条响应消息内并发拉起所有 Developer |
+| `serial` | 模块间有强依赖（如 dev-2 必须等 dev-1 接口实现完才能开始）| 一个完成再下一个 |
+| `grouped` | 部分模块独立、部分有依赖 | 按 `parallel_groups` 分批 |
+
+**bias 应当向 parallel：** 只要不是真有"必须等前一步完成"的依赖，都填 parallel。Plan 阶段已经定义了 interfaces（接口契约），Developer 可以基于契约 mock 协作方实现，无需等待。
+
+**parallel_groups 示例：**
+```yaml
+execution_strategy:
+  mode: grouped
+  parallel_groups:
+    - [auth, user-profile]      # 这两个并发跑
+    - [order-mgr]                # auth + user-profile 完成后再跑（依赖 auth）
+  rationale: "order-mgr 依赖 auth 的 token 接口实现"
+```
+
+**人类可读的并行批次表（强烈建议在 markdown 部分写）：**
+
+```markdown
+## 并行执行批次
+
+| 批次 | 并发模块 | 预计时长 | 依赖 |
+|------|---------|---------|------|
+| 1 | auth, user-profile | ~10min | 无 |
+| 2 | order-mgr | ~5min | 批次 1 完成 |
+```
+
+这样 PM 调度时一眼看清"同批次必须同消息内多 tool_call 拉起"。
 
 ---
 

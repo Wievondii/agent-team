@@ -8,6 +8,7 @@
     "schema_version",
     "round",
     "project_type",
+    "execution_strategy",
     "modules",
     "integration_lead",
     "acceptance_criteria"
@@ -29,6 +30,32 @@
         "test_framework": {
           "type": "string",
           "description": "由 Planner 选择，如 vitest/jest/pytest/cargo-test/go-test"
+        }
+      }
+    },
+    "execution_strategy": {
+      "type": "object",
+      "required": ["mode"],
+      "additionalProperties": false,
+      "description": "明确指明 PM 应当如何调度 Developer。Planner 必须填写。",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["parallel", "serial", "grouped"],
+          "description": "parallel=所有 Developer 同消息并发；serial=逐个串行（仅当模块严格依赖时）；grouped=按 parallel_groups 分批，组内并发组间串行"
+        },
+        "parallel_groups": {
+          "type": "array",
+          "description": "仅当 mode=grouped 时使用。每个内部数组是一组并发模块名；组之间串行。",
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          }
+        },
+        "rationale": {
+          "type": "string",
+          "description": "为什么选这种模式（一句话即可）"
         }
       }
     },

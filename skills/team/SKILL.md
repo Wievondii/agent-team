@@ -248,6 +248,54 @@ node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/check-file-conflicts.mjs \
 
 ### 第 4 步：开发阶段（Developer×N 并行）
 
+<parallel_dispatch_protocol>
+
+## 🔑 并行调度硬规则（v2.0.1 修正）
+
+**v2.0 实测发现：PM 看到 for 循环伪代码后会逐个串行调用 Task，甚至把多模块拼成一个 prompt 给单个 Developer 接力做。这是错的。**
+
+### 读 plan.execution_strategy 决定调度方式
+
+| `mode` | 调度方式 |
+|--------|----------|
+| `parallel` | 在【同一条响应消息】内同时输出 N 个 Task tool_call（Claude Code 会并发执行）|
+| `serial` | 一个完成再下一个（罕见，仅当模块严格依赖时）|
+| `grouped` | 同 `parallel_groups` 内并发，组与组之间串行 |
+
+### ✅ 正确：mode=parallel 时
+
+你的响应消息**必须**在同一轮里同时发起多个 Task tool_call：
+
+```
+[在同一条 assistant 消息内输出：]
+Task(subagent_type="agent-team-developer", description="开发模块 auth", prompt=...)
+Task(subagent_type="agent-team-developer", description="开发模块 profile", prompt=...)
+Task(subagent_type="agent-team-developer", description="开发模块 cart", prompt=...)
+```
+
+Claude Code 看到同消息多 tool_call 会**并发执行**这些 Task，等全部返回后再回到 PM。
+
+### ❌ 错误模式（绝对禁止）
+
+1. **逐个调用串行版**："我先拉起 dev-auth..."（等返回）→"现在拉起 dev-profile..."
+2. **单 Dev 接力多模块**：把 module=[auth, profile, cart] 整个塞到一个 Task prompt 里，让一个 Developer 顺序做完
+3. **for 循环字面执行**：把 plan.modules 里每个模块发一条独立消息
+
+### 自检规则
+
+如果你正在思考"先发起 dev-1，等返回再 dev-2"——**立即停下重新组织**，改成同消息内多 tool_call。
+
+如果模块数 ≥ 2 但你只发了 1 个 Task 给某个 dev——**这是 bug，必须重发**。
+
+### grouped 模式示例
+
+`plan.execution_strategy.parallel_groups = [[auth, profile], [order]]`：
+
+- 第一轮：同消息内 Task(developer, auth) + Task(developer, profile) → 等两个都返回
+- 第二轮：单独 Task(developer, order)（依赖前组）
+
+</parallel_dispatch_protocol>
+
 读 `plan.md.modules`，为每个模块创建 dev log + 启动 Developer：
 
 **关键：在同一条消息里同时调用多个 Task** — Claude Code 会并行执行：
@@ -342,6 +390,58 @@ for group in review_groups:
 
 任一 reviewer 报 rejected → 修复循环（消耗 reviewer_rejection）
 全部 passed/conditional → 进入 5b
+
+<reviewer_resume_rule>
+
+## 🔑 Reviewer 复审 task_id 强制规则（v2.0.1 修正）
+
+**v2.0 实测发现：被打回的代码修完后，PM 拉新 Reviewer 复审，没有复用原 Reviewer 的 task_id，导致复审者完全不知道之前打回的具体原因，等于重新审一遍。这是错的。**
+
+### 规则
+
+打回返工 → 修复完成 → 复审时，**必须**给同一组模块的原 Reviewer 复审：
+
+```bash
+# 1. 查 boulder.json 找该组原 Reviewer 的 task_id
+node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/check-task-id-fresh.mjs \
+  --project-root <project> reviewer <module>
+# 输出 {"fresh": true, "task_id": "..."} → 用这个 task_id
+
+# 2. 复审 Task 调用必须传 task_id 复用 session
+Task(
+  subagent_type="agent-team-reviewer",
+  task_id="<上面查出的 task_id>",   # ← 强制复用
+  description="复审打回的修复",
+  prompt="原 Reviewer 上下文已恢复。请验证以下打回问题是否修复：[Bug 列表]..."
+)
+```
+
+### ✅ 正确模式
+
+- 第 N 轮第 1 次审查：不传 task_id（Claude Code 自动新建 session 并返回 task_id，PM 必须立即写 `task_id_recorded` 事件）
+- 后续所有复审：**必须**传 `task_id=<上次记录的>`（Claude Code 唤醒同一 session）
+
+### ❌ 错误模式（绝对禁止）
+
+1. 每次审查都不传 task_id → 每次都是新 Reviewer，没有上下文
+2. 凭印象选不同 Reviewer task_id → 上下文错位
+3. task_id 过期了不降级，硬传一个失效 ID
+
+### 降级路径
+
+`check-task-id-fresh.mjs` 返回 fresh=false（task_id 过期 / agent 失败 / 心跳超时）时：
+- 创建新 Reviewer Task（不传 task_id），但 prompt 里**必须**注入"上下文重建包"：
+  - round-N/review.md 中原 Reviewer 写的全部审查笔记
+  - 修复涉及的 dev-{module}.md 全文
+  - 打回的具体 Bug 列表 + 期望整改方向
+- 写 `task_id_expired` 事件 + 新 `agent_spawned` 事件
+
+### 自检规则
+
+拉起 reviewer 前必须先做 `check-task-id-fresh.mjs`，绝不允许"懒得查直接新建"。
+**Developer / Tester 修复 Bug 时同理**：必须复用原 Developer/Tester 的 task_id。
+
+</reviewer_resume_rule>
 
 #### 5b. 独占提交
 

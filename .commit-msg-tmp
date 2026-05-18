@@ -1,0 +1,21 @@
+fix(v2.0.1): explicit parallel dispatch protocol + reviewer task_id resume rule
+
+v2.0 实测中暴露两个 prompt 问题（与 OpenCode 版本同源根因）：
+
+1. PM 看到 for 循环伪代码后会逐个串行 Task 调用，甚至把多模块拼成一个 prompt 给单个
+   Developer 接力做。修法：在 SKILL.md 第 4 步开头插入 <parallel_dispatch_protocol>
+   章节，明确要求 mode=parallel 时必须在同一条响应消息内同时输出 N 个 Task tool_call
+   (Claude Code 看到同消息多 tool_call 会并发执行)。附正确/错误模式示例 + 自检规则 +
+   grouped 模式说明。
+
+2. 打回返工后复审时 PM 拉新 Reviewer，没有复用原 Reviewer 的 task_id。修法：在 SKILL.md
+   5a 末尾插入 <reviewer_resume_rule> 章节，强制要求复审前先 check-task-id-fresh.mjs
+   查找原 task_id 并复用。附降级路径（task_id 过期时注入上下文重建包）+ Developer/Tester
+   同理。
+
+Schema 更新：round-plan.schema.json 新增必填字段 execution_strategy
+(mode: parallel/serial/grouped + parallel_groups + rationale)，让 Planner 在设计阶段就
+显式声明并行性，PM 调度时直接读取。
+
+planner.md 配套增加第 7.5 步"设计执行策略"，附 mode 选择表、bias to parallel 原则、
+parallel_groups 示例、人类可读批次表模板。
