@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode-agent-team/schemas/bug-report.schema.json",
+  "title": "Bug report entry (v2)",
+  "description": "rounds/round-N/test.md 中 bugs 数组的单条记录。",
+  "type": "object",
+  "required": [
+    "id",
+    "reporter",
+    "classification",
+    "severity",
+    "impact",
+    "frequency",
+    "responsible",
+    "reproduce_steps",
+    "expected",
+    "actual",
+    "status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^bug-\\d+-\\d+$",
+      "description": "格式：bug-{round}-{seq}"
+    },
+    "reporter": { "type": "string" },
+    "reported_at": { "type": "string", "format": "date-time" },
+    "classification": {
+      "type": "string",
+      "enum": ["A", "B", "C", "D", "E"],
+      "description": "A=模块内 B=跨模块 C=环境 D=需求理解 E=测试用例错误"
+    },
+    "classification_rationale": { "type": "string" },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "cosmetic"],
+      "description": "由 impact × frequency 矩阵推导"
+    },
+    "impact": {
+      "type": "string",
+      "enum": [
+        "data_loss_or_crash",
+        "feature_unusable",
+        "feature_partially_unusable",
+        "poor_ux",
+        "cosmetic"
+      ]
+    },
+    "frequency": {
+      "type": "string",
+      "enum": ["always", "intermittent", "rare"]
+    },
+    "affected_modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "responsible": {
+      "type": "string",
+      "description": "A→{dev-id} / B→planner / C→pm / D→user / E→{tester-id}"
+    },
+    "reproduce_steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "expected": { "type": "string" },
+    "actual": { "type": "string" },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "截图/日志相对路径"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["open", "fixing", "fixed", "verified", "wont_fix", "deferred"]
+    },
+    "fix_iteration": { "type": "integer", "minimum": 0 },
+    "verification_notes": { "type": "string" }
+  }
+}

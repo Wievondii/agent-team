@@ -5,15 +5,15 @@
     "url": "https://github.com/Wievondii"
   },
   "metadata": {
-    "description": "Single-plugin marketplace that distributes the Agent Team multi-agent dev team plugin.",
-    "version": "1.0.0"
+    "description": "Single-plugin marketplace that distributes the Agent Team multi-agent dev team plugin (v2.0).",
+    "version": "2.0.0"
   },
   "plugins": [
     {
       "name": "agent-team",
       "source": ".",
-      "description": "Multi-agent dev team for Claude Code: a Project Manager orchestrates a Planner, Developer, Reviewer, and Tester through a layered shared/private Markdown log system.",
-      "version": "1.0.0",
+      "description": "Multi-agent dev team v2.0 for Claude Code: parallel architecture with three independent budgets, five-class error routing, strict schema validation, shared-file coordinator pattern, and append-only event log. Requires Node.js >= 18.",
+      "version": "2.0.0",
       "category": "agents",
       "keywords": [
         "agent",
@@ -23,7 +23,9 @@
         "planner",
         "developer",
         "reviewer",
-        "tester"
+        "tester",
+        "parallel",
+        "v2"
       ],
       "license": "MIT",
       "homepage": "https://github.com/Wievondii/agent-team",

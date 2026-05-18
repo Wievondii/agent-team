@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode-agent-team/schemas/round-plan.schema.json",
+  "title": "rounds/round-N/plan.md frontmatter (v2)",
+  "description": "Planner 输出的轮次计划 YAML frontmatter 强制 schema。",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "round",
+    "project_type",
+    "modules",
+    "integration_lead",
+    "acceptance_criteria"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "enum": ["2.0", 2.0] },
+    "round": { "type": "integer", "minimum": 1 },
+    "project_type": {
+      "type": "string",
+      "enum": ["interface", "style", "hybrid"]
+    },
+    "tech_stack": {
+      "type": "object",
+      "properties": {
+        "language": { "type": "string" },
+        "framework": { "type": "string" },
+        "package_manager": { "type": "string" },
+        "test_framework": {
+          "type": "string",
+          "description": "由 Planner 选择，如 vitest/jest/pytest/cargo-test/go-test"
+        }
+      }
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "developer", "file_scope"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "developer": { "type": "string", "pattern": "^dev-" },
+          "file_scope": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "description": "glob 模式，如 src/auth/**"
+            }
+          },
+          "interfaces_provided": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name"],
+              "additionalProperties": false,
+              "properties": {
+                "name": { "type": "string" },
+                "spec_file": { "type": "string" },
+                "callers": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "callee_position": {
+                  "type": "string",
+                  "description": "调用方应在哪个文件:行 调用，如 src/orders/checkout.ts:45"
+                },
+                "semantic_constraints": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "如：'同名状态不跳过 onEnter'、'初始化必须 force=true 触发回调'"
+                }
+              }
+            }
+          },
+          "depends_on_specs": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "shared_files": {
+      "type": "array",
+      "description": "需要多个模块协作修改的共享文件，必须指定 coordinator。",
+      "items": {
+        "type": "object",
+        "required": ["path", "coordinator"],
+        "additionalProperties": false,
+        "properties": {
+          "path": { "type": "string" },
+          "coordinator": { "type": "string", "pattern": "^dev-" },
+          "expected_changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["by", "purpose"],
+              "properties": {
+                "by": { "type": "string", "pattern": "^dev-" },
+                "purpose": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "integration_lead": {
+      "type": "string",
+      "pattern": "^dev-",
+      "description": "负责验证所有调用链路的 Developer。"
+    },
+    "test_contracts": {
+      "type": "array",
+      "description": "对外接口的测试契约。每个对外接口至少 1 个 happy path + 1 个 error case。",
+      "items": {
+        "type": "object",
+        "required": ["interface", "cases"],
+        "additionalProperties": false,
+        "properties": {
+          "interface": { "type": "string" },
+          "cases": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": { "type": "string" },
+                "input": {},
+                "expected": {},
+                "expected_error": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "test_method"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^ac-" },
+          "description": { "type": "string" },
+          "test_method": {
+            "type": "string",
+            "enum": ["unit", "integration", "e2e", "manual", "static"]
+          }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "mitigation": { "type": "string" }
+        }
+      }
+    }
+  }
+}

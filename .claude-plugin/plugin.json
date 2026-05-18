@@ -1,7 +1,7 @@
 {
   "name": "agent-team",
-  "version": "1.0.0",
-  "description": "多 Agent 协作开发团队 — 策划师制定计划、开发者编写代码、审查员把关、测试员验证成果。通过共享+私有分层日志通信。Multi-agent dev team for Claude Code with a Project Manager orchestrating a Planner, Developer, Reviewer, and Tester.",
+  "version": "2.0.0",
+  "description": "Multi-agent dev team v2.0 (parallel architecture) — Planner/Developer×N/Reviewer×N/Committer/Tester×N. Three independent budgets, five-class error routing, append-only event log, strict YAML frontmatter schemas, shared-file coordinator pattern. 多 Agent 并行协作开发团队，包含三类独立预算、五类错误路由、强制 schema 校验等 v2.0 改进。Requires Node.js >= 18.",
   "author": {
     "name": "Wievondii",
     "url": "https://github.com/Wievondii"
@@ -23,8 +23,12 @@
     "developer",
     "reviewer",
     "tester",
+    "parallel",
+    "v2",
+    "schema-validation",
     "协作",
-    "多智能体"
+    "多智能体",
+    "并行"
   ],
   "commands": "./commands",
   "agents": "./agents",

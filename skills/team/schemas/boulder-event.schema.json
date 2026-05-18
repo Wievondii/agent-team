@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode-agent-team/schemas/boulder-event.schema.json",
+  "title": "boulder-events.jsonl entry",
+  "description": "Append-only 事件日志的单条记录。所有 boulder.json 状态变化必须先写事件，再由 rebuild-boulder 重建视图。",
+  "type": "object",
+  "required": ["ts", "seq", "event"],
+  "properties": {
+    "ts": { "type": "string", "format": "date-time" },
+    "seq": { "type": "integer", "minimum": 1 },
+    "event": {
+      "type": "string",
+      "enum": [
+        "round_started",
+        "round_completed",
+        "round_baseline_tagged",
+        "agent_spawned",
+        "agent_completed",
+        "agent_failed",
+        "agent_resumed",
+        "agent_heartbeat",
+        "task_id_recorded",
+        "task_id_expired",
+        "budget_consumed",
+        "budget_exhausted",
+        "file_conflict_detected",
+        "file_conflict_resolved",
+        "integration_check_passed",
+        "integration_check_failed",
+        "review_passed",
+        "review_rejected",
+        "code_committed",
+        "test_passed",
+        "test_failed",
+        "bug_reported",
+        "bug_fixed",
+        "escalation_raised",
+        "escalation_resolved",
+        "rollback_to_baseline"
+      ]
+    },
+    "round": { "type": "integer", "minimum": 0 },
+    "role": {
+      "type": "string",
+      "enum": ["pm", "planner", "developer", "reviewer", "committer", "tester", "integration_lead"]
+    },
+    "module": { "type": "string" },
+    "task_id": { "type": "string" },
+    "kind": {
+      "description": "for budget_consumed / budget_exhausted",
+      "type": "string",
+      "enum": ["reviewer_rejection", "bug_fix_a", "bug_fix_b", "round_total"]
+    },
+    "amount": { "type": "integer", "minimum": 1 },
+    "files": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "between": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "bug_id": { "type": "string" },
+    "classification": {
+      "type": "string",
+      "enum": ["A", "B", "C", "D", "E"]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "cosmetic"]
+    },
+    "details": { "type": "string" },
+    "trigger": { "type": "string" }
+  },
+  "additionalProperties": true
+}

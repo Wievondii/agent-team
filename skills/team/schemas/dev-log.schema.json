@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode-agent-team/schemas/dev-log.schema.json",
+  "title": "dev-{module}.md frontmatter (v2)",
+  "description": "Developer 私有工作日志的 YAML frontmatter 强制 schema。Markdown 正文部分允许自由表述。",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "module",
+    "developer_id",
+    "status",
+    "self_check"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "enum": ["2.0", 2.0] },
+    "module": { "type": "string", "minLength": 1 },
+    "developer_id": { "type": "string", "pattern": "^dev-" },
+    "task_id": { "type": ["string", "null"] },
+    "round": { "type": "integer", "minimum": 1 },
+    "is_integration_lead": { "type": "boolean", "default": false },
+    "status": {
+      "type": "string",
+      "enum": ["in_progress", "completed", "blocked", "resumed", "fixing"]
+    },
+    "started_at": { "type": ["string", "null"], "format": "date-time" },
+    "last_heartbeat": { "type": ["string", "null"], "format": "date-time" },
+    "completed_at": { "type": ["string", "null"], "format": "date-time" },
+    "files_changed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "action"],
+        "additionalProperties": false,
+        "properties": {
+          "path": { "type": "string" },
+          "action": {
+            "type": "string",
+            "enum": ["created", "modified", "deleted", "renamed"]
+          },
+          "lines_added": { "type": "integer", "minimum": 0 },
+          "lines_removed": { "type": "integer", "minimum": 0 },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "interfaces_implemented": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "spec_ref": { "type": "string", "description": "锚点：round-N/plan.md#L45" },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "in_progress", "completed", "blocked"]
+          },
+          "callers_verified": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "shared_file_requests": {
+      "type": "array",
+      "description": "非集成负责人对 shared_files 的修改请求，由集成负责人统一合并。",
+      "items": {
+        "type": "object",
+        "required": ["path", "purpose", "patch"],
+        "additionalProperties": false,
+        "properties": {
+          "path": { "type": "string" },
+          "purpose": { "type": "string" },
+          "patch": {
+            "type": "string",
+            "description": "建议的代码片段（diff 风格或完整片段）"
+          },
+          "blocks_me": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "self_check": {
+      "type": "object",
+      "required": ["typecheck", "build", "lint", "unit_tests"],
+      "additionalProperties": false,
+      "properties": {
+        "typecheck": { "$ref": "#/$defs/checkResult" },
+        "build": { "$ref": "#/$defs/checkResult" },
+        "lint": { "$ref": "#/$defs/checkResult" },
+        "unit_tests": { "$ref": "#/$defs/unitTestResult" },
+        "integration_check": { "$ref": "#/$defs/checkResult" }
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["description"],
+        "properties": {
+          "description": { "type": "string" },
+          "needs": { "type": "string" },
+          "raised_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "fix_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["bug_id", "round_iteration", "summary"],
+        "properties": {
+          "bug_id": { "type": "string" },
+          "round_iteration": { "type": "integer", "minimum": 1 },
+          "summary": { "type": "string" },
+          "files": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "verified": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "checkResult": {
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["passed", "failed", "skipped", "not_run"]
+        },
+        "command": { "type": "string" },
+        "evidence": {
+          "type": "string",
+          "description": "命令输出摘要（前 50 行 + 后 20 行即可）"
+        },
+        "skip_reason": { "type": "string" }
+      }
+    },
+    "unitTestResult": {
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["passed", "failed", "skipped", "not_run"]
+        },
+        "command": { "type": "string" },
+        "evidence": { "type": "string" },
+        "skip_reason": { "type": "string" },
+        "coverage": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

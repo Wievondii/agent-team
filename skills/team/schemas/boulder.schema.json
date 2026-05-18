@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencode-agent-team/schemas/boulder.schema.json",
+  "title": "boulder.json (v2)",
+  "description": "持久化状态视图。由 boulder-events.jsonl 重建，禁止直接编辑。",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "current_round",
+    "status",
+    "budgets",
+    "agents",
+    "events_offset"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "enum": ["2.0", 2.0] },
+    "current_round": { "type": "integer", "minimum": 0 },
+    "status": {
+      "type": "string",
+      "enum": ["idle", "in_progress", "blocked", "escalated", "completed"]
+    },
+    "started_at": { "type": ["string", "null"], "format": "date-time" },
+    "last_activity": { "type": ["string", "null"], "format": "date-time" },
+    "active_plan": { "type": ["string", "null"] },
+    "round_baseline_tag": { "type": ["string", "null"] },
+    "budgets": {
+      "type": "object",
+      "required": ["reviewer_rejection", "bug_fix_a", "bug_fix_b", "round_total"],
+      "additionalProperties": false,
+      "properties": {
+        "reviewer_rejection": { "$ref": "#/$defs/budget" },
+        "bug_fix_a": { "$ref": "#/$defs/budget" },
+        "bug_fix_b": { "$ref": "#/$defs/budget" },
+        "round_total": { "$ref": "#/$defs/budget" }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "required": ["planner", "developers", "reviewers", "testers"],
+      "additionalProperties": false,
+      "properties": {
+        "planner": { "$ref": "#/$defs/singleAgent" },
+        "developers": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/devAgent" }
+        },
+        "integration_lead": { "type": ["string", "null"] },
+        "reviewers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/reviewerAgent" }
+        },
+        "testers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/singleAgent" }
+        }
+      }
+    },
+    "events_offset": { "type": "integer", "minimum": 0 },
+    "escalation": {
+      "type": ["object", "null"],
+      "properties": {
+        "trigger": {
+          "type": "string",
+          "enum": [
+            "budget_exhausted",
+            "class_d_error",
+            "integration_failed",
+            "developer_blocked",
+            "destructive_op",
+            "file_conflict_unresolvable"
+          ]
+        },
+        "raised_at": { "type": "string", "format": "date-time" },
+        "details": { "type": "string" }
+      },
+      "required": ["trigger", "raised_at"]
+    }
+  },
+  "$defs": {
+    "budget": {
+      "type": "object",
+      "required": ["used", "max"],
+      "additionalProperties": false,
+      "properties": {
+        "used": { "type": "integer", "minimum": 0 },
+        "max": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "singleAgent": {
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "task_id": { "type": ["string", "null"] },
+        "status": {
+          "type": "string",
+          "enum": ["idle", "active", "completed", "sleeping", "failed", "expired"]
+        },
+        "started_at": { "type": ["string", "null"], "format": "date-time" },
+        "completed_at": { "type": ["string", "null"], "format": "date-time" },
+        "last_heartbeat": { "type": ["string", "null"], "format": "date-time" },
+        "module": { "type": ["string", "null"] }
+      }
+    },
+    "devAgent": {
+      "allOf": [
+        { "$ref": "#/$defs/singleAgent" },
+        {
+          "type": "object",
+          "properties": {
+            "files": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "is_integration_lead": { "type": "boolean" }
+          }
+        }
+      ]
+    },
+    "reviewerAgent": {
+      "allOf": [
+        { "$ref": "#/$defs/singleAgent" },
+        {
+          "type": "object",
+          "properties": {
+            "role": { "type": "string", "enum": ["reviewer", "committer"] },
+            "scope": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "required": ["role"]
+        }
+      ]
+    }
+  }
+}
