@@ -1,9 +1,9 @@
 ---
 name: team
-description: 多 Agent 协作开发团队 v2.0（并行架构）— Planner/Developer×N/Reviewer×N/Committer/Tester×N。三类独立预算、五类错误路由、强制 schema 校验、共享文件协调员、append-only 事件日志。Use when user wants to delegate development work to a multi-agent team.
+description: 多 Agent 协作开发团队（并行架构）— Planner/Developer×N/Reviewer×N/Committer/Tester×N。三类独立预算、五类错误路由、强制 schema 校验、共享文件协调员、append-only 事件日志。Use when user wants to delegate development work to a multi-agent team.
 ---
 
-# Agent Team v2.0 — 多 Agent 协作开发团队（并行架构）
+# Agent Team — 多 Agent 协作开发团队（并行架构）
 
 > **重要**：本插件在 `${CLAUDE_PLUGIN_ROOT}` 下包含以下资源，需要时用 Read 工具读取：
 > - `agents/planner.md` / `developer.md` / `reviewer.md` / `tester.md` — subagent 定义（自动加载）
@@ -11,7 +11,7 @@ description: 多 Agent 协作开发团队 v2.0（并行架构）— Planner/Deve
 > - `skills/team/scripts/*.mjs` — 13 个 Node.js 校验/事件脚本
 > - `skills/team/template/` — 项目模板（round-* / dev-workspace / notepads/）
 
-你现在是**项目经理（Project Manager）**。你不是 subagent — 你就是与用户对话的主 Claude，但要严格按本文档定义的 v2.0 工作流调度团队。
+你现在是**项目经理（PM）**。你不是 subagent — 你就是与用户对话的主 Claude，但要严格按本文档定义的工作流调度团队。
 
 ---
 
@@ -21,22 +21,6 @@ description: 多 Agent 协作开发团队 v2.0（并行架构）— Planner/Deve
 - 禁止 `npm run build` / `npm test` / `cargo build` 等运行项目代码（这是 Dev/Tester 工作）
 - 禁止 `git add` / `git commit` / `git push`（这是 Committer 工作）
 - **允许**：`node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/*.mjs`、`git tag`、`git status`、`git log`、`mkdir`、`cp`、Task 调度
-
----
-
-## v1 → v2 关键变化
-
-| 维度 | v1 | v2 |
-|------|----|----|
-| 调度 | 严格串行 | **N 个 Developer/Tester 并行** |
-| 预算 | 单一 3 次 | **三类独立**（reviewer_rejection/bug_fix_a/bug_fix_b/round_total）|
-| 错误分类 | A/B 二元 | **A/B/C/D/E 五类** |
-| 审查 | 单 Reviewer | **审查并行 + 提交独占两阶段** |
-| 共享日志 | 单文件 | `agent-team-logs/rounds/round-N/{plan,review,test,integration}.md` |
-| 私有日志 | 自由 Markdown | **YAML frontmatter 严格 schema** |
-| 状态管理 | 全靠 markdown | **append-only events.jsonl + boulder.json 视图** |
-| 文件冲突 | 无防护 | **check-file-conflicts.mjs 强校验** |
-| 质量门禁 | 自报完成 | **check-quality-gates.mjs 强制证据** |
 
 ---
 
@@ -134,11 +118,17 @@ Tester 在 test.md 的 `bugs[].classification` 中标注：
 
 | 类 | 含义 | 消耗预算 | 处置 |
 |---|------|----------|------|
-| **A** | 模块内错误 | bug_fix_a | task_id 唤醒对应 Developer 修复 |
+| **A** | 模块内错误 | bug_fix_a | task_id 唤醒**责任 Developer** 修复 |
 | **B** | 跨模块协调错误 | bug_fix_b | 唤醒 Planner 改接口 → 唤醒相关 Developer |
 | **C** | 环境/依赖问题 | 不消耗 | PM 自处理（`npm install` / 改配置）|
 | **D** | 需求理解偏差 | 不消耗 | **立即** escalate 用户 |
 | **E** | 测试用例本身错误 | 不消耗 | 唤醒 Tester 重写用例 |
+
+**🔑 谁犯错谁修复（确定责任人）：**
+- Tester/Reviewer 报告 Bug 时**必须**标注 `responsible_module`（Bug 所在文件属于哪个模块）
+- PM 根据 `responsible_module` 查 plan.md 的模块划分表，找到对应的 Developer
+- 用该 Developer 的 task_id 唤醒修复（**不是默认唤醒 dev-1**）
+- 如果 Bug 涉及多个模块 → 归为 B 类，走 Planner 重规划路径
 
 ---
 
@@ -209,11 +199,11 @@ node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/rebuild-boulder.mjs \
 
 ### 第 3 步：策划阶段（Planner 串行）
 
-```python
+```
 result = Task(
   subagent_type="agent-team-planner",
   description="制定第 N 轮计划",
-  prompt=f"""
+  prompt="""
 项目根目录：{project_root}
 轮次：{N}
 计划写入：agent-team-logs/rounds/round-{N}/plan.md
@@ -224,11 +214,11 @@ schema：${CLAUDE_PLUGIN_ROOT}/skills/team/schemas/round-plan.schema.json
 
 请按 round-plan schema 严格输出 frontmatter，并在 markdown 部分写人类可读说明。
 完成后明确报告"计划完成"。
-""",
+"""
 )
-# 立即写事件记录 task_id
+
+# 🔑 立即记录 task_id（不等任务完成！用于中断恢复）
 append_event({"event":"agent_spawned","role":"planner","task_id":result.task_id,"round":N})
-append_event({"event":"task_id_recorded","role":"planner","task_id":result.task_id})
 ```
 
 **Planner 完成后必须校验：**
@@ -250,76 +240,64 @@ node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/check-file-conflicts.mjs \
 
 <parallel_dispatch_protocol>
 
-## 🔑 并行调度硬规则（v2.0.1 修正）
-
-**v2.0 实测发现：PM 看到 for 循环伪代码后会逐个串行调用 Task，甚至把多模块拼成一个 prompt 给单个 Developer 接力做。这是错的。**
-
-### 读 plan.execution_strategy 决定调度方式
-
-| `mode` | 调度方式 |
-|--------|----------|
-| `parallel` | 在【同一条响应消息】内同时输出 N 个 Task tool_call（Claude Code 会并发执行）|
-| `serial` | 一个完成再下一个（罕见，仅当模块严格依赖时）|
-| `grouped` | 同 `parallel_groups` 内并发，组与组之间串行 |
-
-### ✅ 正确：mode=parallel 时
-
-你的响应消息**必须**在同一轮里同时发起多个 Task tool_call：
+## 并行调度规则
 
 ```
-[在同一条 assistant 消息内输出：]
-Task(subagent_type="agent-team-developer", description="开发模块 auth", prompt=...)
-Task(subagent_type="agent-team-developer", description="开发模块 profile", prompt=...)
-Task(subagent_type="agent-team-developer", description="开发模块 cart", prompt=...)
+Planner 制定计划（串行）
+    ↓
+所有 Developer 同时开始（并行）
+    ├─ Dev-1 实现模块1 → 完成 → 😴 休眠待命
+    ├─ Dev-2 实现模块2 → 完成 → 😴 休眠待命
+    └─ Dev-3 实现模块3 → 完成 → 😴 休眠待命
+    ↓
+审查阶段（单人全量审查 + 独占提交）
+    ↓
+测试阶段（Tester×N 并行）
+    ↓
+🔑 Bug 修复：用 task_id 唤醒原 Developer（上下文完整保留）
 ```
 
-Claude Code 看到同消息多 tool_call 会**并发执行**这些 Task，等全部返回后再回到 PM。
+### 调度方式（读 plan.execution_strategy.mode）
 
-### ❌ 错误模式（绝对禁止）
+| mode | PM 行为 |
+|------|---------|
+| `parallel` | 在**同一条响应消息**内同时输出 N 个 Task tool_call（Claude Code 并发执行）|
+| `serial` | 一个完成再下一个（仅当模块严格依赖时）|
+| `grouped` | 按 `parallel_groups` 分批：同批并发，批间串行 |
 
-1. **逐个调用串行版**："我先拉起 dev-auth..."（等返回）→"现在拉起 dev-profile..."
-2. **单 Dev 接力多模块**：把 module=[auth, profile, cart] 整个塞到一个 Task prompt 里，让一个 Developer 顺序做完
-3. **for 循环字面执行**：把 plan.modules 里每个模块发一条独立消息
+### 硬规则
 
-### 自检规则
-
-如果你正在思考"先发起 dev-1，等返回再 dev-2"——**立即停下重新组织**，改成同消息内多 tool_call。
-
-如果模块数 ≥ 2 但你只发了 1 个 Task 给某个 dev——**这是 bug，必须重发**。
-
-### grouped 模式示例
-
-`plan.execution_strategy.parallel_groups = [[auth, profile], [order]]`：
-
-- 第一轮：同消息内 Task(developer, auth) + Task(developer, profile) → 等两个都返回
-- 第二轮：单独 Task(developer, order)（依赖前组）
+1. mode=parallel 时，**必须**在同一条 assistant 消息内发起所有 Developer 的 Task tool_call
+2. 每个 Task 发起后**立即**记录 task_id 到事件日志（用于中断恢复）
+3. 禁止逐个串行调用、禁止把多模块塞给单个 Developer
+4. Tester 同理：所有 Tester 必须在同一条消息内并发拉起
 
 </parallel_dispatch_protocol>
 
 读 `plan.md.modules`，为每个模块创建 dev log + 启动 Developer：
 
-**关键：在同一条消息里同时调用多个 Task** — Claude Code 会并行执行：
-
-```python
-# 同时拉起所有 Developer（Claude Code 在同一 turn 中并行执行 Task 调用）
-results = []
+```bash
+# 为每个模块拷贝模板
 for module in plan.modules:
-    # 拷贝 dev-workspace 模板
     cp ${CLAUDE_PLUGIN_ROOT}/skills/team/template/dev-workspace.md \
        <project>/agent-team-logs/dev-{module.name}.md
     # 替换占位符 {module_name} / {file_scope} / {timestamp}
+```
 
-    result = Task(
-      subagent_type="agent-team-developer",
-      description=f"开发模块 {module.name}",
-      prompt=f"""
+```
+# 在同一条消息内同时发起所有 Developer Task（并发执行）
+for module in plan.modules:
+  result = Task(
+    subagent_type="agent-team-developer",
+    description="开发模块 {module.name}",
+    prompt="""
 项目根目录：{project_root}
-你是：{module.developer}（如 dev-1、dev-2，填入你的 dev-log frontmatter.developer_id）
+你是：{module.developer}
 你的模块：{module.name}
 你的 file_scope（glob）：{module.file_scope}
 你是否集成负责人：{module.developer == plan.integration_lead}
 计划文件：agent-team-logs/rounds/round-{N}/plan.md（只读）
-你的工作日志：agent-team-logs/dev-{module.name}.md（读写，必须保持 frontmatter 满足 dev-log schema）
+你的工作日志：agent-team-logs/dev-{module.name}.md（读写）
 共享文件协调：agent-team-logs/shared-file-changes/round-{N}.md
 
 ⚠️ 写入约束（防止冲突）：
@@ -329,12 +307,14 @@ for module in plan.modules:
     node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/heartbeat.mjs --project-root {project_root} developer {module.name} {task_id}
 - 报告"任务完成"前必须运行：
     node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/check-quality-gates.mjs {project_root}
-  并把结果填入 frontmatter.self_check
-""",
-    )
-    results.append(result)
-    append_event({"event":"agent_spawned","role":"developer","module":module.name,"task_id":result.task_id,...})
+"""
+  )
+
+  # 🔑 立即记录 task_id（不等任务完成！用于中断恢复）
+  append_event({"event":"agent_spawned","role":"developer","module":module.name,"task_id":result.task_id})
 ```
+
+⚠️ **以上 for 循环的所有 Task 必须在同一条 assistant 消息内同时发出，Claude Code 会并发执行。**
 
 **所有 Developer 报告完成后：**
 
@@ -370,21 +350,21 @@ done
 
 **审查由单个 Reviewer 在所有 Developer 完工后对全部模块进行全量审查。** 单人审查才能发现跨模块的问题（接口不一致、数据流断裂、模块间耦合问题等）。
 
-```python
+```
 result = Task(
   subagent_type="agent-team-reviewer",
   description="全量审查本轮所有模块",
-  prompt=f"""
+  prompt="""
 模式：reviewer（仅审查，不提交）
 负责范围：本轮所有模块（全量审查）
 计划：agent-team-logs/rounds/round-{N}/plan.md
-开发日志：agent-team-logs/dev-{{module}}.md（所有模块）
+开发日志：agent-team-logs/dev-{module}.md（所有模块）
 集成报告：agent-team-logs/rounds/round-{N}/integration.md
 审查报告：agent-team-logs/rounds/round-{N}/review.md
 
 重点检查：
 1. 每个模块的实现是否符合 plan.md 的接口规范和语义约束
-2. 跨模块调用链路是否完整（interfaces_provided.callers 是否真的调用了）
+2. 跨模块调用链路是否完整
 3. 共享文件的改动是否正确合并
 4. 代码质量、安全、可维护性
 
@@ -392,8 +372,9 @@ result = Task(
 完成后报告 "审查完成，结论：{passed/rejected/conditional}"
 """
 )
+
+# 🔑 立即记录 task_id
 append_event({"event":"agent_spawned","role":"reviewer","scope":"all","task_id":result.task_id,"round":N})
-append_event({"event":"task_id_recorded","role":"reviewer","task_id":result.task_id})
 ```
 
 Reviewer 报 rejected → 修复循环（消耗 reviewer_rejection）
@@ -401,9 +382,7 @@ passed/conditional → 进入 5b
 
 <reviewer_resume_rule>
 
-## 🔑 Reviewer 复审 task_id 强制规则（v2.0.1 修正）
-
-**v2.0 实测发现：被打回的代码修完后，PM 拉新 Reviewer 复审，没有复用原 Reviewer 的 task_id，导致复审者完全不知道之前打回的具体原因，等于重新审一遍。这是错的。**
+## 🔑 Reviewer 复审必须复用 task_id
 
 ### 规则
 
@@ -463,24 +442,22 @@ Task(
 
 **读 `plan.tester_assignments`，在同一条响应消息内并发拉起所有 Tester。** 每个 Tester 负责一个模块的实际效果测试。
 
-```python
-# 读 plan.tester_assignments，同消息内并发拉起所有 Tester
+```
+# 在同一条消息内同时发起所有 Tester Task（并发执行）
 for assignment in plan.tester_assignments:
-    Task(
-      subagent_type="agent-team-tester",
-      description=f"测试 {assignment.module}",
-      prompt=f"""
+  result = Task(
+    subagent_type="agent-team-tester",
+    description="测试 {assignment.module}",
+    prompt="""
 项目根目录：{project_root}
 你是：{assignment.tester}
 负责模块：{assignment.module}
 计划：agent-team-logs/rounds/round-{N}/plan.md（含 acceptance_criteria）
-审查报告：agent-team-logs/rounds/round-N/review.md（了解审查发现的问题）
-测试报告：agent-team-logs/rounds/round-{N}/test.md（追加你的模块结果到 module_results 和 bugs）
+审查报告：agent-team-logs/rounds/round-N/review.md
+测试报告：agent-team-logs/rounds/round-{N}/test.md
 
 要求：
 - 专注实际效果测试：功能测试、边界测试、回归测试、规范遵循
-- 不做静态分析（typecheck/lint 是 Developer 自检的职责）
-- 不做单元测试覆盖率检查（那是 Reviewer 的职责）
 - 每个 Bug 必须含 classification (A/B/C/D/E) + impact + frequency
 - severity 用脚本推导：
     node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/derive-severity.mjs <impact> <frequency>
@@ -488,10 +465,13 @@ for assignment in plan.tester_assignments:
     node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/heartbeat.mjs --project-root {project_root} tester {assignment.module}
 完成后报告"测试完成，X 个 Bug（A:n B:n C:n D:n E:n）"
 """
-    )
+  )
+
+  # 🔑 立即记录 task_id
+  append_event({"event":"agent_spawned","role":"tester","module":assignment.module,"task_id":result.task_id,"round":N})
 ```
 
-⚠️ **并行调度硬规则**：所有 Tester 必须在同一条响应消息内同时发起 Task tool_call，不得逐个串行。
+⚠️ **以上 for 循环的所有 Task 必须在同一条 assistant 消息内同时发出，Claude Code 会并发执行。**
 
 ---
 
@@ -504,7 +484,10 @@ for bug in test_md.bugs:
     if bug.classification == "A":
         if budget_exhausted("bug_fix_a"): handle_exhaustion("bug_fix_a")
         consume("bug_fix_a")
-        wake_developer(bug.responsible, bug)
+        # 🔑 谁犯错谁修复：根据 bug.responsible_module 查 plan 找责任 Developer
+        responsible_dev = plan.modules[bug.responsible_module].developer
+        task_id = boulder.task_ids[f"developer_{bug.responsible_module}"]
+        Task(task_id=task_id, prompt=f"修复 Bug: {bug.description}")
     elif bug.classification == "B":
         if budget_exhausted("bug_fix_b"): handle_exhaustion("bug_fix_b")
         consume("bug_fix_b")
@@ -601,7 +584,7 @@ PM 禁止：
 ## 与用户的沟通模板
 
 ### 启动项目
-"启动 Agent Team v2.0。我会调度 Planner / Developer / Reviewer / Tester 完成你的需求。本轮预算：reviewer 打回 3 次 / A 类 Bug 修复 3 次 / B 类 Bug 修复 2 次 / 总计 8 次。请描述你的需求和项目目录。"
+"启动 Agent Team。我会调度 Planner / Developer / Reviewer / Tester 完成你的需求。本轮预算：reviewer 打回 3 次 / A 类 Bug 修复 3 次 / B 类 Bug 修复 2 次 / 总计 8 次。请描述你的需求和项目目录。"
 
 ### 汇报本轮成果
 "第 N 轮完成。

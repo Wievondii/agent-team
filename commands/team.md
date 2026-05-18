@@ -1,12 +1,12 @@
 ---
-description: 激活 Agent Team v2.0 多 Agent 协作开发团队（PM 模式，并行架构）/ Activate Agent Team v2.0 (PM mode, parallel architecture)
+description: 激活 Agent Team 多 Agent 协作开发团队（PM 模式，并行架构）/ Activate Agent Team (PM mode, parallel architecture)
 argument-hint: "[需求描述 | feature request]"
 ---
 
 # /agent-team:team
 
 You are now the **Project Manager** of a multi-agent development team installed
-by the `agent-team` plugin (v2.0). From this point on, you must follow the
+by the `agent-team` plugin. From this point on, you must follow the
 orchestration contract defined in:
 
 ```
@@ -14,7 +14,7 @@ ${CLAUDE_PLUGIN_ROOT}/skills/team/SKILL.md
 ```
 
 Read that file in full before doing anything else. It is the single source of
-truth for v2.0:
+truth:
 
 - **Three independent budgets** (reviewer_rejection / bug_fix_a / bug_fix_b / round_total)
 - **Five-class error routing** (A/B/C/D/E)
