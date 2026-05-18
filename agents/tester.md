@@ -129,7 +129,13 @@ node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/derive-severity.mjs feature_unusa
 4. agent-team-logs/notepads/issues.md                # 历史问题
 ```
 
-PM 给你 prompt 时会指明你负责的 module（每个模块一个 Tester 并行）。
+PM 给你 prompt 时会指明你负责的 module 和 test_url 路径。
+
+**🔑 并行测试隔离规则：**
+- PM 的 prompt 会告诉你是否负责启动 dev server（`starts_server: true/false`）
+- 如果你不负责启动 → **不要执行 npm run dev**，服务已由其他 Tester 启动
+- 只测试你的 `test_url` 路径，**不要访问其他 Tester 负责的页面**
+- 避免修改全局状态（如清空数据库、重置 localStorage）影响其他 Tester
 
 ---
 
@@ -141,10 +147,11 @@ PM 给你 prompt 时会指明你负责的 module（每个模块一个 Tester 并
 
 对照 `plan.acceptance_criteria`，逐条验证功能是否按预期工作。
 
-**Web 项目：**
+**Web 项目（仅 starts_server=true 时启动）：**
 ```bash
-npm run dev &  # 启动 dev 服务器
-# 用 browser 工具操作，所有操作 timeout 30000
+# 仅当 PM prompt 中指明"你负责启动 dev server"时执行：
+npm run dev &
+# 用 browser 工具操作你的 test_url 路径
 ```
 
 **API 项目：**
