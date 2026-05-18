@@ -297,14 +297,48 @@ tester_assignments:
 
 **不需要填 reviewer_assignments。** 审查由单个 Reviewer 在所有 Developer 完工后对全部模块进行全量审查，这样才能发现跨模块的问题。Planner 无需规划 Reviewer 分配。
 
-#### 7.5.4 在 markdown 部分写并行批次表（必填）
+#### 7.5.4 在 markdown 部分写并行规划表（必填）
 
 ```markdown
+## 模块划分
+
+| 模块 | Developer | 文件范围 | 依赖规范 |
+|------|-----------|---------|---------|
+| auth | dev-1 | src/auth/**, src/types/auth.ts | AuthService 接口 |
+| profile | dev-2 | src/profile/**, src/types/profile.ts | 风格规范 |
+| order-mgr | dev-3 | src/order/**, src/types/order.ts | OrderService 接口 |
+
+## 并行策略
+
+所有 Developer 同时开始，遵循各自的规范：
+- dev-1 实现 auth 模块（AuthService 接口）
+- dev-2 实现 profile 模块（遵循风格规范）
+- dev-3 实现 order-mgr 模块（OrderService 接口）
+
+## 文件归属表
+
+| 文件路径 | 归属 Developer |
+|---------|---------------|
+| src/auth/** | dev-1 |
+| src/types/auth.ts | dev-1 |
+| src/profile/** | dev-2 |
+| src/types/profile.ts | dev-2 |
+| src/order/** | dev-3 |
+| src/types/order.ts | dev-3 |
+| src/types/index.ts | dev-1（coordinator）|
+
+## 接口调用关系表
+
+| 被调接口 | 提供方 | 调用方 | 调用时机 | 必须调用的位置 |
+|---------|--------|--------|---------|-------------|
+| AuthService.login | dev-1 | dev-2 | 用户登录时 | profile/Page.vue:45 |
+| OrderService.create | dev-3 | dev-2 | 下单时 | profile/Cart.vue:80 |
+
 ## 并行执行批次
 
 | 批次 | 并发模块 | 依赖 |
 |------|---------|------|
-| 1 | auth, user-profile | 无 |
+| 1 | auth, profile | 无 |
 | 2 | order-mgr | 批次 1 完成 |
 
 ## Tester 分配
@@ -312,11 +346,11 @@ tester_assignments:
 | Tester | 负责模块 |
 |--------|---------|
 | tester-1 | auth |
-| tester-2 | user-profile |
+| tester-2 | profile |
 | tester-3 | order-mgr |
 ```
 
-PM 调度时直接读这两张表，同批次必须在同一条消息内多 tool_call 并发拉起。
+PM 调度时直接读这些表：同批次必须在同一条消息内多 tool_call 并发拉起，文件归属表用于冲突检查，接口调用关系表用于集成验证。
 
 ---
 
