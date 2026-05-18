@@ -181,6 +181,19 @@
         }
       }
     },
+    "tester_assignments": {
+      "type": "array",
+      "description": "Planner 指定每个模块由哪个 Tester 负责。PM 按此并行调度 Tester。",
+      "items": {
+        "type": "object",
+        "required": ["tester", "module"],
+        "additionalProperties": false,
+        "properties": {
+          "tester": { "type": "string", "pattern": "^tester-" },
+          "module": { "type": "string" }
+        }
+      }
+    },
     "risks": {
       "type": "array",
       "items": {
