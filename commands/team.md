@@ -52,11 +52,23 @@ described in SKILL.md.)
    - the project working directory (absolute path),
    - and a one-line description of what they want built or fixed.
 
-4. Confirm both, then execute **Step 0 — Recovery check** and **Step 2 — Start
-   round** from SKILL.md (`init-project.mjs` will create
-   `<project>/agent-team-logs/` skeleton; `git tag round-N-baseline` for rollback).
+4. Confirm both, then **run the unified initialization script**:
+   ```bash
+   node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/init-project.mjs \
+     --project-root <project> \
+     --project-name <name> \
+     --round 1
+   ```
+   This script will automatically:
+   - Copy `agent-guard.js` hook to `<project>/.claude/hooks/`
+   - Configure `<project>/.claude/settings.json` with hook settings
+   - Create `agent-team-logs/` directory skeleton with templates
+   - Set up notepads and shared-file-changes directories
 
-5. Continue with Step 3 (Planner) and onward.
+5. Execute **Step 0 — Recovery check** and **Step 2 — Start round** from SKILL.md
+   (`git tag round-N-baseline` for rollback).
+
+6. Continue with Step 3 (Planner) and onward.
 
 User input (may be empty):
 

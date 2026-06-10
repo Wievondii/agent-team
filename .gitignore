@@ -15,3 +15,4 @@ node_modules/
 
 # Runtime artifacts produced when this plugin runs in another project
 agent-team-logs/
+logs/

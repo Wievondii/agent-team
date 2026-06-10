@@ -171,9 +171,13 @@ node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/check-budget.mjs --project-root <
 ### 第 2 步：启动新一轮
 
 ```bash
-# 1. 初始化项目目录
+# 1. 初始化项目目录（自动完成以下工作）
 node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/init-project.mjs \
   --project-root <project> --project-name <name> --round N
+#   → 复制 agent-guard.js hook 到 <project>/.claude/hooks/
+#   → 配置 <project>/.claude/settings.json（hook 自动生效）
+#   → 创建 agent-team-logs/ 目录骨架（含模板）
+#   → 设置 notepads 和 shared-file-changes 目录
 
 # 2. 写 round_started 事件
 node ${CLAUDE_PLUGIN_ROOT}/skills/team/scripts/append-event.mjs \

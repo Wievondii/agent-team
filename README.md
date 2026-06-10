@@ -97,7 +97,7 @@ Then tell the PM what you need:
 
 The team handles everything: **plan → parallel develop → integration check → parallel review → commit → parallel test → report**.
 
-The first time you run the plugin, the PM's startup hook auto-installs the npm deps the validation scripts need (`ajv`, `fast-glob`, `proper-lockfile`, `yaml`). You won't notice — it just works.
+The first time you run the plugin, the PM's startup hook auto-installs the npm deps the validation scripts need (`ajv`, `fast-glob`, `proper-lockfile`, `yaml`). The `init-project.mjs` script also automatically copies the Agent Guard hook to your project and configures `.claude/settings.json`. You won't notice — it just works.
 
 ---
 
@@ -245,6 +245,96 @@ Default mapping:
 10. **Hard schema validation** — dev-log / round-plan / bug-report all validated via Ajv against JSON Schema; non-conforming outputs are rejected immediately.
 11. **Forced quality-gate evidence** — Developer must run `check-quality-gates.mjs` and paste command output into `self_check.evidence` before reporting completion.
 12. **Rollback mechanism** — every round starts with `git tag round-N-baseline`; on budget exhaustion, the user can opt for `git reset --hard` to restart the round.
+13. **Agent Guard Hook** — built-in hook (`.claude/hooks/agent-guard.js`) enforces role-based permissions using `agent_type` field. Blocks Write/Edit/Bash based on each agent's allowed paths and commands. Intercepts return detailed role-responsibility messages.
+
+---
+
+## Agent Guard Hook
+
+The plugin includes a built-in **Agent Guard Hook** that provides **role-based permission enforcement** using Claude Code's `agent_type` field.
+
+### How It Works
+
+The hook runs before every `Write`, `Edit`, or `Bash` tool call. It reads the `agent_type` field from the PreToolUse hook input to identify which agent is making the call, then enforces role-specific permission rules.
+
+**Permission Matrix:**
+
+| Agent | Write/Edit Allowed | Bash Commands Blocked |
+|-------|-------------------|----------------------|
+| **PM** (main thread) | All files | None |
+| **Planner** | `agent-team-logs/**` only | git add/commit/push, build/test commands |
+| **Developer** | `file_scope` + `dev-*.md` + notepads | git add/commit/push |
+| **Reviewer** | `review.md` + notepads | build/test commands |
+| **Tester** | `test.md` + notepads | git add/commit/push, build commands |
+
+**All agents are blocked from:**
+- `.git/**` - Git internals
+- `node_modules/**` - Dependencies
+- `.env`, `.env.*` - Environment files
+- `*.key`, `*.pem` - Security keys
+
+### Blocked Bash Commands
+
+| Agent | Blocked Patterns |
+|-------|-----------------|
+| **Planner** | `git add/commit/push`, `npm run build/test`, `cargo build/test`, `go build/test`, `pytest` |
+| **Developer** | `git add/commit/push` |
+| **Reviewer** | `npm run build/test`, `cargo build/test`, `go build/test`, `pytest` |
+| **Tester** | `git add/commit/push`, `npm run build`, `cargo build`, `go build` |
+
+### Intercept Messages
+
+When an agent tries to perform an unauthorized action, the hook returns a detailed message explaining:
+
+```
+⛔ 角色越权拦截
+
+👤 你的角色: 策划师（Planner）
+
+🚫 拦截的操作: Write 项目源文件
+📁 目标: src/index.ts
+📝 原因: 不在允许的路径范围内
+
+✅ 你的职责:
+  • 分析需求，制定开发计划
+  • 定义接口规范和语义约束
+  • 划分模块和 file_scope
+  • 识别 shared_files 和 coordinator
+
+❌ 你不能:
+  • 禁止 Write/Edit 项目源文件
+  • 禁止运行 build/test/lint 命令
+  • 禁止 git add/commit/push
+```
+
+### Configuration
+
+The hook is automatically configured when the PM initializes a project. The `init-project.mjs` script:
+
+1. Copies `agent-guard.js` to `<project>/.claude/hooks/`
+2. Configures `<project>/.claude/settings.json` with the hook settings:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [".claude/hooks/agent-guard.js"],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+No additional setup required — the hook is active as soon as the project is initialized by the PM.
 
 ---
 

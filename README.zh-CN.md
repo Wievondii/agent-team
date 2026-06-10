@@ -71,7 +71,7 @@ git clone https://github.com/Wievondii/agent-team.git
 
 团队会自动跑完整流程：**计划 → 并行开发 → 集成检查 → 并行审查 → 提交 → 并行测试 → 汇报**。
 
-首次运行时 PM 启动钩子会自动安装校验脚本依赖（`ajv` / `fast-glob` / `proper-lockfile` / `yaml`）—— 用户无感知。
+首次运行时 PM 启动钩子会自动安装校验脚本依赖（`ajv` / `fast-glob` / `proper-lockfile` / `yaml`）—— 用户无感知。`init-project.mjs` 脚本还会自动复制 Agent Guard hook 到项目目录并配置 `.claude/settings.json`。
 
 ---
 
@@ -209,6 +209,96 @@ model: opus    # 改成 sonnet / haiku
 10. **Schema 硬校验** — dev-log / round-plan / bug-report 全部走 JSON Schema（ajv），不通过的产出直接打回
 11. **质量门禁强制证据** — Developer 报告完成前必须 `check-quality-gates.mjs` 通过并把命令输出贴到 `self_check.evidence`
 12. **回滚机制** — 每轮 `git tag round-N-baseline`，预算耗尽时可选 `git reset --hard` 回退本轮
+13. **Agent Guard Hook** — 内置 hook（`.claude/hooks/agent-guard.js`）利用 `agent_type` 字段实现基于角色的权限拦截。根据每个角色的允许路径和命令规则拦截 Write/Edit/Bash 操作，返回详细的角色职责提示。
+
+---
+
+## Agent Guard Hook
+
+插件内置 **Agent Guard Hook**，利用 Claude Code 的 `agent_type` 字段实现**基于角色的权限强制执行**。
+
+### 工作原理
+
+hook 在每次 `Write`、`Edit` 或 `Bash` 工具调用前运行。它从 PreToolUse hook 输入中读取 `agent_type` 字段来识别是哪个 agent 在调用，然后执行角色特定的权限规则。
+
+**权限矩阵：**
+
+| 角色 | Write/Edit 允许范围 | Bash 命令限制 |
+|------|-------------------|---------------|
+| **PM**（主线程）| 所有文件 | 无 |
+| **Planner** | 仅 `agent-team-logs/**` | git add/commit/push、build/test 命令 |
+| **Developer** | `file_scope` + `dev-*.md` + notepads | git add/commit/push |
+| **Reviewer** | `review.md` + notepads | build/test 命令 |
+| **Tester** | `test.md` + notepads | git add/commit/push、build 命令 |
+
+**所有角色都被阻止访问：**
+- `.git/**` - Git 内部文件
+- `node_modules/**` - 依赖目录
+- `.env`、`.env.*` - 环境变量文件
+- `*.key`、`*.pem` - 安全密钥
+
+### 拦截的 Bash 命令
+
+| 角色 | 拦截的命令模式 |
+|------|---------------|
+| **Planner** | `git add/commit/push`、`npm run build/test`、`cargo build/test`、`go build/test`、`pytest` |
+| **Developer** | `git add/commit/push` |
+| **Reviewer** | `npm run build/test`、`cargo build/test`、`go build/test`、`pytest` |
+| **Tester** | `git add/commit/push`、`npm run build`、`cargo build`、`go build` |
+
+### 拦截提示示例
+
+当 agent 尝试执行未授权操作时，hook 会返回详细信息：
+
+```
+⛔ 角色越权拦截
+
+👤 你的角色: 策划师（Planner）
+
+🚫 拦截的操作: Write 项目源文件
+📁 目标: src/index.ts
+📝 原因: 不在允许的路径范围内
+
+✅ 你的职责:
+  • 分析需求，制定开发计划
+  • 定义接口规范和语义约束
+  • 划分模块和 file_scope
+  • 识别 shared_files 和 coordinator
+
+❌ 你不能:
+  • 禁止 Write/Edit 项目源文件
+  • 禁止运行 build/test/lint 命令
+  • 禁止 git add/commit/push
+```
+
+### 配置
+
+当 PM 初始化项目时，hook 会自动配置。`init-project.mjs` 脚本会：
+
+1. 复制 `agent-guard.js` 到 `<project>/.claude/hooks/`
+2. 配置 `<project>/.claude/settings.json`：
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [".claude/hooks/agent-guard.js"],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+无需额外设置 — PM 初始化项目后 hook 即自动生效。
 
 ---
 
